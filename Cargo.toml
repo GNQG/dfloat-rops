@@ -14,4 +14,4 @@ fma = {version = "^0.1.0", optional = true}
 rand = "*"
 
 [features]
-use-fma = ["fma"]
+use-fma = ["fma", "safeeft/use-fma"]
