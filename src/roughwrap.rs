@@ -1,4 +1,3 @@
-//use core::ops::*;
 use core::clone::Clone;
 use core::marker::PhantomData;
 use dfloat::dfloat::DFloat;
@@ -89,7 +88,12 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundMul for RWDFloatRegular<S, T>
                 DFloat::min_value()
             }
         } else {
-            let tmp_prod = (T::mul_up(a_low, b_high), T::mul_up(a_high, b_low)); // must eval low*low part
+            let tmp_prod = (T::mul_up(a_low.clone(), b_high),
+                            T::mul_up(a_high.clone() +
+                                      (a_high.abs() *
+                                       (S::eps() / S::radix() * (S::one() + S::eps())) +
+                                       a_low),
+                                      b_low));
             let (mh, ml) = fasttwosum(mh, T::add_up(T::add_up(ml, tmp_prod.0), tmp_prod.1));
             DFloat::_from_pair_raw(mh, ml)
         }
@@ -109,7 +113,12 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundMul for RWDFloatRegular<S, T>
                 DFloat::max_value()
             }
         } else {
-            let tmp_prod = (T::mul_down(a_low, b_high), T::mul_down(a_high, b_low)); // must eval low*low part
+            let tmp_prod = (T::mul_down(a_low.clone(), b_high),
+                            T::mul_down(a_high.clone() -
+                                        (a_high.abs() *
+                                         (S::eps() / S::radix() * (S::one() + S::eps())) +
+                                         a_low),
+                                        b_low));
             let (mh, ml) = fasttwosum(mh, T::add_down(T::add_down(ml, tmp_prod.0), tmp_prod.1));
             DFloat::_from_pair_raw(mh, ml)
         }
