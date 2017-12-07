@@ -1,10 +1,12 @@
 #![feature(test)]
 
 extern crate test;
+extern crate rand;
 extern crate dfloat;
 extern crate roundops;
 extern crate dfloat_rops;
 
+use rand::Rng;
 use dfloat::dfloat::DFloat;
 use roundops::*;
 use roundops::methods::Emulation;
@@ -14,18 +16,13 @@ type KVRDF64 = KVRDFloatRegular<f64, Emulation<f64>>;
 
 #[bench]
 fn bench_add(b: &mut test::Bencher) {
-    let mut v1 = vec![DFloat::<f64>::one()];
-    v1.push(DFloat::from_pair(234.65, 231.7));
-    v1.push(DFloat::from_pair(-64.65, -0.14357));
-    v1.push(DFloat::from_pair(23.65, 234631.7));
-    v1.push(DFloat::from_pair(-2.644525, 1.7));
-    v1.push(DFloat::from_pair(145e-20, 0.));
-    let mut v2 = vec![DFloat::from_pair(234.65, 231.7)];
-    v2.push(DFloat::from_pair(-64.65, -0.14357));
-    v2.push(DFloat::from_pair(23.65, 234631.7));
-    v2.push(DFloat::from_pair(-2.644525, 1.7));
-    v2.push(DFloat::from_pair(145e-20, 0.));
-    v2.push(DFloat::<f64>::one());
+    let mut rng = rand::thread_rng();
+    let mut v1 = Vec::<DFloat<f64>>::new();
+    let mut v2 = Vec::<DFloat<f64>>::new();
+    for _ in 0..100 {
+        v1.push(DFloat::from_pair(rng.next_f64(),rng.next_f64()));
+        v2.push(DFloat::from_pair(rng.next_f64(),rng.next_f64()));
+    }
 
     b.iter(|| for (df1, df2) in v1.iter().zip(v2.iter()) {
                test::black_box(KVRDF64::add_up(df1.clone(), df2.clone()));
@@ -34,18 +31,13 @@ fn bench_add(b: &mut test::Bencher) {
 
 #[bench]
 fn bench_sub(b: &mut test::Bencher) {
-    let mut v1 = vec![DFloat::<f64>::one()];
-    v1.push(DFloat::from_pair(234.65, 231.7));
-    v1.push(DFloat::from_pair(-64.65, -0.14357));
-    v1.push(DFloat::from_pair(23.65, 234631.7));
-    v1.push(DFloat::from_pair(-2.644525, 1.7));
-    v1.push(DFloat::from_pair(145e-20, 0.));
-    let mut v2 = vec![DFloat::from_pair(234.65, 231.7)];
-    v2.push(DFloat::from_pair(-64.65, -0.14357));
-    v2.push(DFloat::from_pair(23.65, 234631.7));
-    v2.push(DFloat::from_pair(-2.644525, 1.7));
-    v2.push(DFloat::from_pair(145e-20, 0.));
-    v2.push(DFloat::<f64>::one());
+    let mut rng = rand::thread_rng();
+    let mut v1 = Vec::<DFloat<f64>>::new();
+    let mut v2 = Vec::<DFloat<f64>>::new();
+    for _ in 0..100 {
+        v1.push(DFloat::from_pair(rng.next_f64(),rng.next_f64()));
+        v2.push(DFloat::from_pair(rng.next_f64(),rng.next_f64()));
+    }
 
     b.iter(|| for (df1, df2) in v1.iter().zip(v2.iter()) {
                test::black_box(KVRDF64::sub_up(df1.clone(), df2.clone()));
@@ -54,18 +46,13 @@ fn bench_sub(b: &mut test::Bencher) {
 
 #[bench]
 fn bench_mul(b: &mut test::Bencher) {
-    let mut v1 = vec![DFloat::<f64>::one()];
-    v1.push(DFloat::from_pair(234.65, 231.7));
-    v1.push(DFloat::from_pair(-64.65, -0.14357));
-    v1.push(DFloat::from_pair(23.65, 234631.7));
-    v1.push(DFloat::from_pair(-2.644525, 1.7));
-    v1.push(DFloat::from_pair(145e-20, 0.));
-    let mut v2 = vec![DFloat::from_pair(234.65, 231.7)];
-    v2.push(DFloat::from_pair(-64.65, -0.14357));
-    v2.push(DFloat::from_pair(23.65, 234631.7));
-    v2.push(DFloat::from_pair(-2.644525, 1.7));
-    v2.push(DFloat::from_pair(145e-20, 0.));
-    v2.push(DFloat::<f64>::one());
+    let mut rng = rand::thread_rng();
+    let mut v1 = Vec::<DFloat<f64>>::new();
+    let mut v2 = Vec::<DFloat<f64>>::new();
+    for _ in 0..100 {
+        v1.push(DFloat::from_pair(rng.next_f64(),rng.next_f64()));
+        v2.push(DFloat::from_pair(rng.next_f64(),rng.next_f64()));
+    }
 
     b.iter(|| for (df1, df2) in v1.iter().zip(v2.iter()) {
                test::black_box(KVRDF64::mul_up(df1.clone(), df2.clone()));
@@ -74,18 +61,13 @@ fn bench_mul(b: &mut test::Bencher) {
 
 #[bench]
 fn bench_div(b: &mut test::Bencher) {
-    let mut v1 = vec![DFloat::<f64>::one()];
-    v1.push(DFloat::from_pair(234.65, 231.7));
-    v1.push(DFloat::from_pair(-64.65, -0.14357));
-    v1.push(DFloat::from_pair(23.65, 234631.7));
-    v1.push(DFloat::from_pair(-2.644525, 1.7));
-    v1.push(DFloat::from_pair(145e-20, 0.));
-    let mut v2 = vec![DFloat::from_pair(234.65, 231.7)];
-    v2.push(DFloat::from_pair(-64.65, -0.14357));
-    v2.push(DFloat::from_pair(23.65, 234631.7));
-    v2.push(DFloat::from_pair(-2.644525, 1.7));
-    v2.push(DFloat::from_pair(145e-20, 0.));
-    v2.push(DFloat::<f64>::one());
+    let mut rng = rand::thread_rng();
+    let mut v1 = Vec::<DFloat<f64>>::new();
+    let mut v2 = Vec::<DFloat<f64>>::new();
+    for _ in 0..100 {
+        v1.push(DFloat::from_pair(rng.next_f64(),rng.next_f64()));
+        v2.push(DFloat::from_pair(rng.next_f64(),rng.next_f64()));
+    }
 
     b.iter(|| for (df1, df2) in v1.iter().zip(v2.iter()) {
                test::black_box(KVRDF64::div_up(df1.clone(), df2.clone()));
@@ -94,40 +76,13 @@ fn bench_div(b: &mut test::Bencher) {
 
 #[bench]
 fn bench_sqrt(b: &mut test::Bencher) {
-    let mut v1 = vec![DFloat::<f64>::one()];
-    v1.push(DFloat::from_pair(234.65, 231.7));
-    v1.push(DFloat::from_pair(64.65, -0.14357));
-    v1.push(DFloat::from_pair(23.65, 234631.7));
-    v1.push(DFloat::from_pair(2.644525, 1.7));
-    v1.push(DFloat::from_pair(145e-20, 0.));
-    v1.push(DFloat::from_pair(234.65, 231.7));
-    v1.push(DFloat::from_pair(64.65, -0.14357));
-    v1.push(DFloat::from_pair(23.65, 234631.7));
-    v1.push(DFloat::from_pair(2.644525, 1.7));
-    v1.push(DFloat::from_pair(145e-20, 0.));
-    v1.push(DFloat::from_pair(234.65, 231.7));
-    v1.push(DFloat::from_pair(64.65, -0.14357));
-    v1.push(DFloat::from_pair(23.65, 234631.7));
-    v1.push(DFloat::from_pair(2.644525, 1.7));
-    v1.push(DFloat::from_pair(145e-20, 0.));
-    v1.push(DFloat::from_pair(234.65, 231.7));
-    v1.push(DFloat::from_pair(64.65, -0.14357));
-    v1.push(DFloat::from_pair(23.65, 234631.7));
-    v1.push(DFloat::from_pair(2.644525, 1.7));
-    v1.push(DFloat::from_pair(145e-20, 0.));
-    v1.push(DFloat::from_pair(234.65, 231.7));
-    v1.push(DFloat::from_pair(64.65, -0.14357));
-    v1.push(DFloat::from_pair(23.65, 234631.7));
-    v1.push(DFloat::from_pair(2.644525, 1.7));
-    v1.push(DFloat::from_pair(145e-20, 0.));
-    v1.push(DFloat::from_pair(234.65, 231.7));
-    v1.push(DFloat::from_pair(64.65, -0.14357));
-    v1.push(DFloat::from_pair(23.65, 234631.7));
-    v1.push(DFloat::from_pair(2.644525, 1.7));
-    v1.push(DFloat::from_pair(145e-20, 0.));
+    let mut rng = rand::thread_rng();
+    let mut v1 = Vec::<DFloat<f64>>::new();
+    for _ in 0..100 {
+        v1.push(DFloat::from_pair(rng.next_f64(),rng.next_f64()));
+    }
 
     b.iter(|| for df1 in v1.iter() {
                test::black_box(KVRDF64::sqrt_up(df1.clone()));
            })
 }
-
