@@ -92,3 +92,42 @@ fn bench_div(b: &mut test::Bencher) {
            })
 }
 
+#[bench]
+fn bench_sqrt(b: &mut test::Bencher) {
+    let mut v1 = vec![DFloat::<f64>::one()];
+    v1.push(DFloat::from_pair(234.65, 231.7));
+    v1.push(DFloat::from_pair(64.65, -0.14357));
+    v1.push(DFloat::from_pair(23.65, 234631.7));
+    v1.push(DFloat::from_pair(2.644525, 1.7));
+    v1.push(DFloat::from_pair(145e-20, 0.));
+    v1.push(DFloat::from_pair(234.65, 231.7));
+    v1.push(DFloat::from_pair(64.65, -0.14357));
+    v1.push(DFloat::from_pair(23.65, 234631.7));
+    v1.push(DFloat::from_pair(2.644525, 1.7));
+    v1.push(DFloat::from_pair(145e-20, 0.));
+    v1.push(DFloat::from_pair(234.65, 231.7));
+    v1.push(DFloat::from_pair(64.65, -0.14357));
+    v1.push(DFloat::from_pair(23.65, 234631.7));
+    v1.push(DFloat::from_pair(2.644525, 1.7));
+    v1.push(DFloat::from_pair(145e-20, 0.));
+    v1.push(DFloat::from_pair(234.65, 231.7));
+    v1.push(DFloat::from_pair(64.65, -0.14357));
+    v1.push(DFloat::from_pair(23.65, 234631.7));
+    v1.push(DFloat::from_pair(2.644525, 1.7));
+    v1.push(DFloat::from_pair(145e-20, 0.));
+    v1.push(DFloat::from_pair(234.65, 231.7));
+    v1.push(DFloat::from_pair(64.65, -0.14357));
+    v1.push(DFloat::from_pair(23.65, 234631.7));
+    v1.push(DFloat::from_pair(2.644525, 1.7));
+    v1.push(DFloat::from_pair(145e-20, 0.));
+    v1.push(DFloat::from_pair(234.65, 231.7));
+    v1.push(DFloat::from_pair(64.65, -0.14357));
+    v1.push(DFloat::from_pair(23.65, 234631.7));
+    v1.push(DFloat::from_pair(2.644525, 1.7));
+    v1.push(DFloat::from_pair(145e-20, 0.));
+
+    b.iter(|| for df1 in v1.iter() {
+               test::black_box(KVRDF64::sqrt_up(df1.clone()));
+           })
+}
+

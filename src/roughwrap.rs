@@ -190,10 +190,11 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundDiv for RWDFloatRegular<S, T>
                                                                 -d_high.clone()); // error free
                     let d_low_tmp =
                         T::add_down(T::add_down(T::add_down(near_ma_h + a_high / S::radix(), // safe
-                                                      T::mul_down(-d_high.clone() / S::radix(), // safe
-                                                                b_low.clone())),
-                                            a_low / S::radix() - S::unit_underflow()), // al/2.: unsafe
-                                  near_ma_l);
+                                                            T::mul_down(-d_high.clone() /
+                                                                        S::radix(), // safe
+                                                                        b_low.clone())),
+                                                a_low / S::radix() - S::unit_underflow()), // al/2.: unsafe
+                                    near_ma_l);
                     let bht = b_high / S::radix();
                     let tmp = if d_low_tmp >= S::zero() {
                         // safe down
@@ -212,11 +213,12 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundDiv for RWDFloatRegular<S, T>
                     let (near_ma_h, near_ma_l) = // adding error of twoprod
                         (near_ma_h,
                          near_ma_l - (S::one() + S::one() + S::one()) * S::unit_underflow());
-                    let d_low_tmp = T::add_down(T::add_down(T::add_down(near_ma_h + a_high, // safe
-                                                                  T::mul_down(-d_high.clone(),
-                                                                            b_low.clone())),
-                                                        a_low),
-                                              near_ma_l);
+                    let d_low_tmp =
+                        T::add_down(T::add_down(T::add_down(near_ma_h + a_high, // safe
+                                                            T::mul_down(-d_high.clone(),
+                                                                        b_low.clone())),
+                                                a_low),
+                                    near_ma_l);
                     let tmp = if d_low_tmp >= S::zero() {
                         T::add_down(b_high, b_low)
                     } else {
@@ -248,10 +250,11 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundDiv for RWDFloatRegular<S, T>
                                                                 -d_high.clone()); // error free
                     let d_low_tmp =
                         T::add_down(T::add_down(T::add_down(near_ma_h + a_high / S::radix(), // safe
-                                                      T::mul_down(-d_high.clone() / S::radix(), // safe
-                                                                b_low.clone())),
-                                            a_low / S::radix() - S::unit_underflow()), // al/2.: unsafe
-                                  near_ma_l);
+                                                            T::mul_down(-d_high.clone() /
+                                                                        S::radix(), // safe
+                                                                        b_low.clone())),
+                                                a_low / S::radix() - S::unit_underflow()), // al/2.: unsafe
+                                    near_ma_l);
                     let bht = b_high / S::radix();
                     let tmp = if d_low_tmp >= S::zero() {
                         // safe up
@@ -270,11 +273,12 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundDiv for RWDFloatRegular<S, T>
                     let (near_ma_h, near_ma_l) = // adding error of twoprod
                         (near_ma_h,
                          near_ma_l - (S::one() + S::one() + S::one()) * S::unit_underflow());
-                    let d_low_tmp = T::add_down(T::add_down(T::add_down(near_ma_h + a_high, // safe
-                                                                  T::mul_down(-d_high.clone(),
-                                                                            b_low.clone())),
-                                                        a_low),
-                                              near_ma_l);
+                    let d_low_tmp =
+                        T::add_down(T::add_down(T::add_down(near_ma_h + a_high, // safe
+                                                            T::mul_down(-d_high.clone(),
+                                                                        b_low.clone())),
+                                                a_low),
+                                    near_ma_l);
                     let tmp = if d_low_tmp >= S::zero() {
                         T::add_up(b_high, b_low)
                     } else {
@@ -331,11 +335,47 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundDiv for RWDFloatRegular<S, T>
     }
 }
 
-impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundSqrt for RWDFloatRegular<S, T> {
+impl<S: IEEE754Float + Clone, T: RoundOps<S> + RoundSqrt> RoundSqrt for RWDFloatRegular<S, T> {
     fn sqrt_up(a: DFloat<S>) -> DFloat<S> {
-        unimplemented!()
+        let (a_h, a_l) = a.decomposite();
+        if a_h == S::infinity() {
+            DFloat::infinity()
+        } else if a_h == S::zero() {
+            DFloat::zero()
+        } else {
+            let r_high = a_h.clone().sqrt();
+            let (near_ma_h, near_ma_l) = safetwoproduct(-r_high.clone(), r_high.clone());
+            let near_ma_l = near_ma_l + (S::one() + S::one() + S::one()) * S::unit_underflow();
+            let r_low_tmp = T::add_up(T::add_up(near_ma_h + a_h.clone(), a_l.clone()), // safe
+                                      near_ma_l.clone());
+            let tmp = if r_low_tmp > S::zero() {
+                T::add_down(T::sqrt_down(T::add_down(a_h, a_l)), r_high.clone())
+            } else {
+                T::add_up(T::sqrt_up(T::add_up(a_h, a_l)), r_high.clone())
+            };
+            let r = safetwosum(r_high, T::div_up(r_low_tmp, tmp));
+            DFloat::_from_pair_raw(r.0, r.1)
+        }
     }
     fn sqrt_down(a: DFloat<S>) -> DFloat<S> {
-        unimplemented!()
+        let (a_h, a_l) = a.decomposite();
+        if a_h == S::infinity() {
+            DFloat::infinity()
+        } else if a_h == S::zero() {
+            DFloat::zero()
+        } else {
+            let r_high = a_h.clone().sqrt();
+            let (near_ma_h, near_ma_l) = safetwoproduct(-r_high.clone(), r_high.clone());
+            let near_ma_l = near_ma_l - (S::one() + S::one() + S::one()) * S::unit_underflow();
+            let r_low_tmp = T::add_down(T::add_down(near_ma_h + a_h.clone(), a_l.clone()), // safe
+                                        near_ma_l.clone());
+            let tmp = if r_low_tmp > S::zero() {
+                T::add_up(T::sqrt_up(T::add_up(a_h, a_l)), r_high.clone())
+            } else {
+                T::add_down(T::sqrt_down(T::add_down(a_h, a_l)), r_high.clone())
+            };
+            let r = safetwosum(r_high, T::div_down(r_low_tmp, tmp));
+            DFloat::_from_pair_raw(r.0, r.1)
+        }
     }
 }
