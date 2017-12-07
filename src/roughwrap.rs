@@ -139,56 +139,92 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundDiv for RWDFloatRegular<S, T>
         } else if b_high.is_infinite() {
             DFloat::from_single(d_high)
         } else {
-            let sign_b_high = b_high.clone() / b_high.clone().abs();
-            // let sign_b_high = b_high.sign();
-            let (add_offset, mul_offset) = (sign_b_high.clone() *
-                                            ((S::one() + S::eps()) * (S::eps() / S::radix())),
-                                            sign_b_high.clone() * S::unit_underflow());
-            //let tmp = mul_offset.clone();
-            let (adder, muler) = (|a: &S, b: &S, p: &S| {
-                                      let s = a.clone() + b.clone();
-                                      s.clone() + s.abs() * p.clone()
-                                  },
-                                  |a: &S, b: &S, p1: &S, p2: &S| {
-                                      let p = a.clone() * b.clone() + p1.clone();
-                                      p.clone() + p.abs() * p2.clone()
-                                  });
-            let (near_ma_h, near_ma_l) = safetwoproduct(b_high.clone(), -d_high.clone());
-            if near_ma_h.is_infinite() {
-                let near_ma = safetwoproduct(b_high.clone() / S::radix(), -d_high.clone());
-                let (near_ma_h, near_ma_l) =
-                    (near_ma.0, near_ma.1 + (S::one() + S::one() + S::one()) * mul_offset.clone());
-                let (half_a_h, half_b_l, half_a_l) = (a_high / S::radix() + mul_offset.clone(),
-                                                      b_low.clone() / S::radix() +
-                                                      mul_offset.clone(),
-                                                      a_low / S::radix() + mul_offset.clone());
-                let d = adder(&adder(&near_ma_h, &half_a_h, &add_offset),
-                              &muler(&(-d_high.clone()), &half_b_l, &mul_offset, &add_offset),
-                              &add_offset);
-                let d = adder(&d, &half_a_l, &add_offset);
-                let d = adder(&d, &near_ma_l, &add_offset);
-                let e = if d > S::zero() {
-                    T::add_down(b_high, b_low) / S::radix() - S::unit_underflow()
+            if b_high > S::zero() {
+                let (near_ma_h, near_ma_l) = safetwoproduct(b_high.clone(), -d_high.clone());
+                if near_ma_h.is_infinite() {
+                    // b_high is not too small. -> b_high / S::radix() is safe.
+                    let (near_ma_h, near_ma_l) = safetwoproduct(b_high.clone() / S::radix(),
+                                                                -d_high.clone()); // error free
+                    let d_low_tmp =
+                        T::add_up(T::add_up(T::add_up(near_ma_h + a_high / S::radix(), // safe
+                                                      T::mul_up(-d_high.clone() / S::radix(), // safe
+                                                                b_low.clone())),
+                                            a_low / S::radix() + S::unit_underflow()), // al/2.: unsafe
+                                  near_ma_l);
+                    let bht = b_high / S::radix();
+                    let tmp = if d_low_tmp >= S::zero() {
+                        // safe down
+                        bht.clone() -
+                        (bht.abs() * (S::eps() / S::radix() * (S::one() + S::eps())) +
+                         b_low / S::radix())
+                    } else {
+                        // safe up
+                        bht.clone() +
+                        (bht.abs() * (S::eps() / S::radix() * (S::one() + S::eps())) +
+                         b_low / S::radix())
+                    };
+                    let d = safetwosum(d_high, T::div_up(d_low_tmp, tmp));
+                    DFloat::_from_pair_raw(d.0, d.1)
                 } else {
-                    T::add_up(b_high, b_low) / S::radix() + S::unit_underflow()
-                };
-                let (d_high, d_low) = fasttwosum(d_high, T::div_up(d, e));
-                DFloat::_from_pair_raw(d_high, d_low)
+                    let (near_ma_h, near_ma_l) = // adding error of twoprod
+                        (near_ma_h,
+                         near_ma_l + (S::one() + S::one() + S::one()) * S::unit_underflow());
+                    let d_low_tmp = T::add_up(T::add_up(T::add_up(near_ma_h + a_high, // safe
+                                                                  T::mul_up(-d_high.clone(),
+                                                                            b_low.clone())),
+                                                        a_low),
+                                              near_ma_l);
+                    let tmp = if d_low_tmp >= S::zero() {
+                        T::add_down(b_high, b_low)
+                    } else {
+                        T::add_up(b_high, b_low)
+                    };
+                    let d = safetwosum(d_high, T::div_up(d_low_tmp, tmp));
+                    DFloat::_from_pair_raw(d.0, d.1)
+                }
             } else {
-                let (near_ma_h, near_ma_l) =
-                    (near_ma_h, near_ma_l + (S::one() + S::one() + S::one()) * mul_offset.clone());
-                let d = adder(&adder(&near_ma_h, &a_high, &add_offset),
-                              &muler(&(-d_high.clone()), &b_low, &mul_offset, &add_offset),
-                              &add_offset);
-                let d = adder(&d, &a_low, &add_offset);
-                let d = adder(&d, &near_ma_l, &add_offset);
-                let e = if d > S::zero() {
-                    T::add_down(b_high, b_low) / S::radix() - S::unit_underflow()
+                let (near_ma_h, near_ma_l) = safetwoproduct(b_high.clone(), -d_high.clone());
+                if near_ma_h.is_infinite() {
+                    // b_high is not too small. -> b_high / S::radix() is safe.
+                    let (near_ma_h, near_ma_l) = safetwoproduct(b_high.clone() / S::radix(),
+                                                                -d_high.clone()); // error free
+                    let d_low_tmp =
+                        T::add_down(T::add_down(T::add_down(near_ma_h + a_high / S::radix(), // safe
+                                                      T::mul_down(-d_high.clone() / S::radix(), // safe
+                                                                b_low.clone())),
+                                            a_low / S::radix() - S::unit_underflow()), // al/2.: unsafe
+                                  near_ma_l);
+                    let bht = b_high / S::radix();
+                    let tmp = if d_low_tmp >= S::zero() {
+                        // safe down
+                        bht.clone() -
+                        (bht.abs() * (S::eps() / S::radix() * (S::one() + S::eps())) +
+                         b_low / S::radix())
+                    } else {
+                        // safe up
+                        bht.clone() +
+                        (bht.abs() * (S::eps() / S::radix() * (S::one() + S::eps())) +
+                         b_low / S::radix())
+                    };
+                    let d = safetwosum(d_high, T::div_up(d_low_tmp, tmp));
+                    DFloat::_from_pair_raw(d.0, d.1)
                 } else {
-                    T::add_up(b_high, b_low) / S::radix() + S::unit_underflow()
-                };
-                let (d_high, d_low) = fasttwosum(d_high, T::div_up(d, e));
-                DFloat::_from_pair_raw(d_high, d_low)
+                    let (near_ma_h, near_ma_l) = // adding error of twoprod
+                        (near_ma_h,
+                         near_ma_l - (S::one() + S::one() + S::one()) * S::unit_underflow());
+                    let d_low_tmp = T::add_down(T::add_down(T::add_down(near_ma_h + a_high, // safe
+                                                                  T::mul_down(-d_high.clone(),
+                                                                            b_low.clone())),
+                                                        a_low),
+                                              near_ma_l);
+                    let tmp = if d_low_tmp >= S::zero() {
+                        T::add_down(b_high, b_low)
+                    } else {
+                        T::add_up(b_high, b_low)
+                    };
+                    let d = safetwosum(d_high, T::div_up(d_low_tmp, tmp));
+                    DFloat::_from_pair_raw(d.0, d.1)
+                }
             }
         }
     }
@@ -204,56 +240,92 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundDiv for RWDFloatRegular<S, T>
         } else if b_high.is_infinite() {
             DFloat::from_single(d_high)
         } else {
-            let sign_b_high = b_high.clone() / b_high.clone().abs();
-            // let sign_b_high = b_high.sign();
-            let (add_offset, mul_offset) = (-sign_b_high.clone() *
-                                            ((S::one() + S::eps()) * (S::eps() / S::radix())),
-                                            -sign_b_high.clone() * S::unit_underflow());
-            //let tmp = mul_offset.clone();
-            let (adder, muler) = (|a: &S, b: &S, p: &S| {
-                                      let s = a.clone() + b.clone();
-                                      s.clone() + s.abs() * p.clone()
-                                  },
-                                  |a: &S, b: &S, p1: &S, p2: &S| {
-                                      let p = a.clone() * b.clone() + p1.clone();
-                                      p.clone() + p.abs() * p2.clone()
-                                  });
-            let (near_ma_h, near_ma_l) = safetwoproduct(b_high.clone(), -d_high.clone());
-            if near_ma_h.is_infinite() {
-                let near_ma = safetwoproduct(b_high.clone() / S::radix(), -d_high.clone());
-                let (near_ma_h, near_ma_l) =
-                    (near_ma.0, near_ma.1 + (S::one() + S::one() + S::one()) * mul_offset.clone());
-                let (half_a_h, half_b_l, half_a_l) = (a_high / S::radix() + mul_offset.clone(),
-                                                      b_low.clone() / S::radix() +
-                                                      mul_offset.clone(),
-                                                      a_low / S::radix() + mul_offset.clone());
-                let d = adder(&adder(&near_ma_h, &half_a_h, &add_offset),
-                              &muler(&(-d_high.clone()), &half_b_l, &mul_offset, &add_offset),
-                              &add_offset);
-                let d = adder(&d, &half_a_l, &add_offset);
-                let d = adder(&d, &near_ma_l, &add_offset);
-                let e = if d > S::zero() {
-                    T::add_up(b_high, b_low) / S::radix() + S::unit_underflow()
+            if b_high > S::zero() {
+                let (near_ma_h, near_ma_l) = safetwoproduct(b_high.clone(), -d_high.clone());
+                if near_ma_h.is_infinite() {
+                    // b_high is not too small. -> b_high / S::radix() is safe.
+                    let (near_ma_h, near_ma_l) = safetwoproduct(b_high.clone() / S::radix(),
+                                                                -d_high.clone()); // error free
+                    let d_low_tmp =
+                        T::add_down(T::add_down(T::add_down(near_ma_h + a_high / S::radix(), // safe
+                                                      T::mul_down(-d_high.clone() / S::radix(), // safe
+                                                                b_low.clone())),
+                                            a_low / S::radix() - S::unit_underflow()), // al/2.: unsafe
+                                  near_ma_l);
+                    let bht = b_high / S::radix();
+                    let tmp = if d_low_tmp >= S::zero() {
+                        // safe up
+                        bht.clone() +
+                        (bht.abs() * (S::eps() / S::radix() * (S::one() + S::eps())) +
+                         b_low / S::radix())
+                    } else {
+                        // safe down
+                        bht.clone() -
+                        (bht.abs() * (S::eps() / S::radix() * (S::one() + S::eps())) +
+                         b_low / S::radix())
+                    };
+                    let d = safetwosum(d_high, T::div_down(d_low_tmp, tmp));
+                    DFloat::_from_pair_raw(d.0, d.1)
                 } else {
-                    T::add_down(b_high, b_low) / S::radix() - S::unit_underflow()
-                };
-                let (d_high, d_low) = fasttwosum(d_high, T::div_down(d, e));
-                DFloat::_from_pair_raw(d_high, d_low)
+                    let (near_ma_h, near_ma_l) = // adding error of twoprod
+                        (near_ma_h,
+                         near_ma_l - (S::one() + S::one() + S::one()) * S::unit_underflow());
+                    let d_low_tmp = T::add_down(T::add_down(T::add_down(near_ma_h + a_high, // safe
+                                                                  T::mul_down(-d_high.clone(),
+                                                                            b_low.clone())),
+                                                        a_low),
+                                              near_ma_l);
+                    let tmp = if d_low_tmp >= S::zero() {
+                        T::add_up(b_high, b_low)
+                    } else {
+                        T::add_down(b_high, b_low)
+                    };
+                    let d = safetwosum(d_high, T::div_down(d_low_tmp, tmp));
+                    DFloat::_from_pair_raw(d.0, d.1)
+                }
             } else {
-                let (near_ma_h, near_ma_l) =
-                    (near_ma_h, near_ma_l + (S::one() + S::one() + S::one()) * mul_offset.clone());
-                let d = adder(&adder(&near_ma_h, &a_high, &add_offset),
-                              &muler(&(-d_high.clone()), &b_low, &mul_offset, &add_offset),
-                              &add_offset);
-                let d = adder(&d, &a_low, &add_offset);
-                let d = adder(&d, &near_ma_l, &add_offset);
-                let e = if d > S::zero() {
-                    T::add_up(b_high, b_low)
+                let (near_ma_h, near_ma_l) = safetwoproduct(b_high.clone(), -d_high.clone());
+                if near_ma_h.is_infinite() {
+                    // b_high is not too small. -> b_high / S::radix() is safe.
+                    let (near_ma_h, near_ma_l) = safetwoproduct(b_high.clone() / S::radix(),
+                                                                -d_high.clone()); // error free
+                    let d_low_tmp =
+                        T::add_up(T::add_up(T::add_up(near_ma_h + a_high / S::radix(), // safe
+                                                      T::mul_up(-d_high.clone() / S::radix(), // safe
+                                                                b_low.clone())),
+                                            a_low / S::radix() + S::unit_underflow()), // al/2.: unsafe
+                                  near_ma_l);
+                    let bht = b_high / S::radix();
+                    let tmp = if d_low_tmp >= S::zero() {
+                        // safe up
+                        bht.clone() +
+                        (bht.abs() * (S::eps() / S::radix() * (S::one() + S::eps())) +
+                         b_low / S::radix())
+                    } else {
+                        // safe down
+                        bht.clone() -
+                        (bht.abs() * (S::eps() / S::radix() * (S::one() + S::eps())) +
+                         b_low / S::radix())
+                    };
+                    let d = safetwosum(d_high, T::div_down(d_low_tmp, tmp));
+                    DFloat::_from_pair_raw(d.0, d.1)
                 } else {
-                    T::add_down(b_high, b_low)
-                };
-                let (d_high, d_low) = fasttwosum(d_high, T::div_down(d, e));
-                DFloat::_from_pair_raw(d_high, d_low)
+                    let (near_ma_h, near_ma_l) = // adding error of twoprod
+                        (near_ma_h,
+                         near_ma_l - (S::one() + S::one() + S::one()) * S::unit_underflow());
+                    let d_low_tmp = T::add_up(T::add_up(T::add_up(near_ma_h + a_high, // safe
+                                                                  T::mul_up(-d_high.clone(),
+                                                                            b_low.clone())),
+                                                        a_low),
+                                              near_ma_l);
+                    let tmp = if d_low_tmp >= S::zero() {
+                        T::add_up(b_high, b_low)
+                    } else {
+                        T::add_down(b_high, b_low)
+                    };
+                    let d = safetwosum(d_high, T::div_down(d_low_tmp, tmp));
+                    DFloat::_from_pair_raw(d.0, d.1)
+                }
             }
         }
     }
