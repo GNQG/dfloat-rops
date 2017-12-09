@@ -4,9 +4,21 @@ use core::marker::PhantomData;
 use dfloat::dfloat::DFloat;
 use float_traits::IEEE754Float;
 use roundops::*;
-use safeeft::{fasttwosum, safetwosum_branch as safetwosum,
+use safeeft::{FloatEFT, fasttwosum, safetwosum_branch as safetwosum,
               safetwoproduct_fma as safetwoproduct};
-use fma::{fma,Fma};
+use fma::{fma, Fma};
+
+#[inline]
+fn safetwoproduct_up<S: FloatEFT + Fma>(a: S, b: S) -> (S, S) {
+    let p = safetwoproduct(a, b);
+    fasttwosum(p.0, p.1 + S::unit_underflow())
+}
+
+#[inline]
+fn safetwoproduct_down<S: FloatEFT + Fma>(a: S, b: S) -> (S, S) {
+    let p = safetwoproduct(a, b);
+    fasttwosum(p.0, p.1 - S::unit_underflow())
+}
 
 pub struct KVRDFloatFMA<S: IEEE754Float + Fma + Clone, T: RoundOps<S>>(PhantomData<(S, T)>);
 
@@ -78,7 +90,7 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundMul for KVRDFloatFMA<S,
     type Num = DFloat<S>;
     fn mul_up(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
         let ((a_high, a_low), (b_high, b_low)) = (a.decomposite(), b.decomposite());
-        let (mh, ml) = safetwoproduct(a_high.clone(), b_high.clone());
+        let (mh, ml) = safetwoproduct_up(a_high.clone(), b_high.clone());
         if mh.is_infinite() {
             if mh == S::infinity() {
                 DFloat::infinity()
@@ -97,7 +109,7 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundMul for KVRDFloatFMA<S,
 
     fn mul_down(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
         let ((a_high, a_low), (b_high, b_low)) = (a.decomposite(), b.decomposite());
-        let (mh, ml) = safetwoproduct(a_high.clone(), b_high.clone());
+        let (mh, ml) = safetwoproduct_down(a_high.clone(), b_high.clone());
         if mh.is_infinite() {
             if mh == S::neg_infinity() {
                 DFloat::neg_infinity()
@@ -131,11 +143,11 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundDiv for KVRDFloatFMA<S,
             DFloat::from_single(d_high)
         } else {
             if b_high > S::zero() {
-                let (near_ma_h, near_ma_l) = safetwoproduct(b_high.clone(), -d_high.clone());
+                let (near_ma_h, near_ma_l) = safetwoproduct_up(b_high.clone(), -d_high.clone());
                 if near_ma_h.is_infinite() {
                     // b_high is not too small. -> b_high / S::radix() is safe.
-                    let (near_ma_h, near_ma_l) = safetwoproduct(b_high.clone() / S::radix(),
-                                                                -d_high.clone());
+                    let (near_ma_h, near_ma_l) = safetwoproduct_up(b_high.clone() / S::radix(),
+                                                                   -d_high.clone());
                     let d_low_tmp =                                           //  __| safe |__
                         T::add_up(T::add_up(T::add_up(T::add_up(near_ma_h, a_high / S::radix()),
                                                       T::mul_up(-d_high.clone(), b_low.clone() / S::radix())),
@@ -164,10 +176,10 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundDiv for KVRDFloatFMA<S,
                     DFloat::_from_pair_raw(d.0, d.1)
                 }
             } else {
-                let (near_ma_h, near_ma_l) = safetwoproduct(b_high.clone(), -d_high.clone());
+                let (near_ma_h, near_ma_l) = safetwoproduct_down(b_high.clone(), -d_high.clone());
                 if near_ma_h.is_infinite() {
-                    let (near_ma_h, near_ma_l) = safetwoproduct(b_high.clone() / S::radix(),
-                                                                -d_high.clone());
+                    let (near_ma_h, near_ma_l) = safetwoproduct_down(b_high.clone() / S::radix(),
+                                                                     -d_high.clone());
                     let d_low_tmp =
                         T::add_down(T::add_down(T::add_down(T::add_down(near_ma_h,
                                                                         a_high / S::radix()),
@@ -214,11 +226,11 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundDiv for KVRDFloatFMA<S,
             DFloat::from_single(d_high)
         } else {
             if b_high > S::zero() {
-                let (near_ma_h, near_ma_l) = safetwoproduct(b_high.clone(), -d_high.clone());
+                let (near_ma_h, near_ma_l) = safetwoproduct_down(b_high.clone(), -d_high.clone());
                 if near_ma_h.is_infinite() {
                     // b_high is not too small. -> b_high / S::radix() is safe.
-                    let (near_ma_h, near_ma_l) = safetwoproduct(b_high.clone() / S::radix(),
-                                                                -d_high.clone());
+                    let (near_ma_h, near_ma_l) = safetwoproduct_down(b_high.clone() / S::radix(),
+                                                                     -d_high.clone());
                     let d_low_tmp =                                           //  __| safe |__
                         T::add_down(T::add_down(T::add_down(T::add_down(near_ma_h, a_high / S::radix()),
                                                       T::mul_down(-d_high.clone(), b_low.clone() / S::radix())),
@@ -248,10 +260,10 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundDiv for KVRDFloatFMA<S,
                     DFloat::_from_pair_raw(d.0, d.1)
                 }
             } else {
-                let (near_ma_h, near_ma_l) = safetwoproduct(b_high.clone(), -d_high.clone());
+                let (near_ma_h, near_ma_l) = safetwoproduct_up(b_high.clone(), -d_high.clone());
                 if near_ma_h.is_infinite() {
-                    let (near_ma_h, near_ma_l) = safetwoproduct(b_high.clone() / S::radix(),
-                                                                -d_high.clone());
+                    let (near_ma_h, near_ma_l) = safetwoproduct_up(b_high.clone() / S::radix(),
+                                                                   -d_high.clone());
                     let d_low_tmp =
                         T::add_up(T::add_up(T::add_up(T::add_up(near_ma_h, a_high / S::radix()),
                                                       T::mul_up(-d_high.clone(),
@@ -293,7 +305,7 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S> + RoundSqrt> RoundSqrt for KV
             DFloat::zero()
         } else {
             let r_high = a_h.clone().sqrt();
-            let (near_ma_h, near_ma_l) = safetwoproduct(-r_high.clone(), r_high.clone());
+            let (near_ma_h, near_ma_l) = safetwoproduct_up(-r_high.clone(), r_high.clone());
             let r_low_tmp = T::add_up(T::add_up(T::add_up(near_ma_h, a_h.clone()), a_l.clone()),
                                       near_ma_l.clone());
             let tmp = if r_low_tmp > S::zero() {
@@ -313,7 +325,7 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S> + RoundSqrt> RoundSqrt for KV
             DFloat::zero()
         } else {
             let r_high = a_h.clone().sqrt();
-            let (near_ma_h, near_ma_l) = safetwoproduct(-r_high.clone(), r_high.clone());
+            let (near_ma_h, near_ma_l) = safetwoproduct_down(-r_high.clone(), r_high.clone());
             let r_low_tmp = T::add_down(T::add_down(T::add_down(near_ma_h, a_h.clone()),
                                                     a_l.clone()),
                                         near_ma_l.clone());
