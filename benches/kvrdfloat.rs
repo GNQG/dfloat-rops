@@ -7,7 +7,7 @@ extern crate roundops;
 extern crate dfloat_rops;
 
 use rand::Rng;
-use dfloat::dfloat::DFloat;
+use dfloat::DFloat;
 use roundops::*;
 use roundops::methods::EmulationRegular;
 use dfloat_rops::KVRDFloatRegular;

@@ -1,7 +1,7 @@
 //use core::ops::*;
 use core::clone::Clone;
 use core::marker::PhantomData;
-use dfloat::dfloat::DFloat;
+use dfloat::DFloat;
 use float_traits::IEEE754Float;
 use roundops::*;
 use safeeft::{fasttwosum, safetwosum_fma as safetwosum, safetwoproduct_fma as safetwoproduct};
