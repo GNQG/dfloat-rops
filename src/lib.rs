@@ -16,12 +16,12 @@ pub use roughwrap::RWDFloatRegular;
 #[cfg(feature = "use-fma")]
 mod roughwrap_fma;
 #[cfg(feature = "use-fma")]
-pub use roughwrap_fma::RWDFloatFMA;
+pub use roughwrap_fma::RWDFloatFma;
 
 #[cfg(not(feature = "use-fma"))]
 pub use RWDFloatRegular as RWDFloat;
 #[cfg(feature = "use-fma")]
-pub use RWDFloatFMA as RWDFloat;
+pub use RWDFloatFma as RWDFloat;
 
 
 #[cfg(test)]

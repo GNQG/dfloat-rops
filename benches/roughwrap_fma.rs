@@ -11,9 +11,9 @@ use rand::Rng;
 use dfloat::DFloat;
 use roundops::*;
 use roundops::methods::RoughWrappingUnchecked;
-use dfloat_rops::RWDFloatFMA;
+use dfloat_rops::RWDFloatFma;
 
-type RWDF64 = RWDFloatFMA<f64, RoughWrappingUnchecked<f64>>;
+type RWDF64 = RWDFloatFma<f64, RoughWrappingUnchecked<f64>>;
 
 #[bench]
 fn bench_add(b: &mut test::Bencher) {
