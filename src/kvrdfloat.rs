@@ -1,4 +1,3 @@
-//use core::ops::*;
 use core::clone::Clone;
 use core::marker::PhantomData;
 use dfloat::DFloat;
@@ -55,9 +54,9 @@ fn safetwoproduct_down<S: FloatEFT, T: RoundOps<S>>(a: S, b: S) -> (S, S) {
 }
 
 
-pub struct KVRDFloatRegular<S: IEEE754Float + Clone, T: RoundOps<S>>(PhantomData<(S, T)>);
+pub struct KVRDFloat<S: IEEE754Float + Clone, T: RoundOps<S>>(PhantomData<(S, T)>);
 
-impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundAdd for KVRDFloatRegular<S, T> {
+impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundAdd for KVRDFloat<S, T> {
     type Num = DFloat<S>;
     fn add_up(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
         let ((a_high, a_low), (b_high, b_low)) = (a.decomposite(), b.decomposite());
@@ -89,7 +88,7 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundAdd for KVRDFloatRegular<S, T
     }
 }
 
-impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundSub for KVRDFloatRegular<S, T> {
+impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundSub for KVRDFloat<S, T> {
     type Num = DFloat<S>;
     fn sub_up(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
         let ((a_high, a_low), (b_high, b_low)) = (a.decomposite(), b.decomposite());
@@ -121,7 +120,7 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundSub for KVRDFloatRegular<S, T
     }
 }
 
-impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundMul for KVRDFloatRegular<S, T> {
+impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundMul for KVRDFloat<S, T> {
     type Num = DFloat<S>;
     fn mul_up(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
         let ((a_high, a_low), (b_high, b_low)) = (a.decomposite(), b.decomposite());
@@ -161,7 +160,7 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundMul for KVRDFloatRegular<S, T
     }
 }
 
-impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundDiv for KVRDFloatRegular<S, T> {
+impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundDiv for KVRDFloat<S, T> {
     type Num = DFloat<S>;
     fn div_up(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
         let ((a_high, a_low), (b_high, b_low)) = (a.decomposite(), b.decomposite());
@@ -329,7 +328,7 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundDiv for KVRDFloatRegular<S, T
     }
 }
 
-impl<S: IEEE754Float + Clone, T: RoundOps<S> + RoundSqrt> RoundSqrt for KVRDFloatRegular<S, T> {
+impl<S: IEEE754Float + Clone, T: RoundOps<S> + RoundSqrt> RoundSqrt for KVRDFloat<S, T> {
     fn sqrt_up(a: DFloat<S>) -> DFloat<S> {
         let (a_h, a_l) = a.decomposite();
         if a_h == S::infinity() {

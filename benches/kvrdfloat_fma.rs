@@ -11,9 +11,9 @@ use rand::Rng;
 use dfloat::DFloat;
 use roundops::*;
 use roundops::methods::EmulationFma;
-use dfloat_rops::KVRDFloatRegular;
+use dfloat_rops::KVRDFloat;
 
-type KVRDF64 = KVRDFloatRegular<f64, EmulationFma<f64>>;
+type KVRDF64 = KVRDFloat<f64, EmulationFma<f64>>;
 
 #[bench]
 fn bench_add(b: &mut test::Bencher) {

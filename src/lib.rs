@@ -8,17 +8,7 @@ extern crate roundops;
 extern crate fma;
 
 mod kvrdfloat;
-pub use kvrdfloat::KVRDFloatRegular;
-
-#[cfg(feature = "use-fma")]
-mod kvrdfloat_fma;
-#[cfg(feature = "use-fma")]
-pub use kvrdfloat_fma::KVRDFloatFMA;
-
-#[cfg(not(feature = "use-fma"))]
-pub use KVRDFloatRegular as KVRDFloat;
-#[cfg(feature = "use-fma")]
-pub use KVRDFloatFMA as KVRDFloat;
+pub use kvrdfloat::KVRDFloat;
 
 mod roughwrap;
 pub use roughwrap::RWDFloatRegular;
