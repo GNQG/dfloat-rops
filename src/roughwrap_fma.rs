@@ -149,7 +149,7 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundDiv for RWDFloatFma<S, 
                 } else {
                     T::add_up(b_high, b_low)
                 };
-                let d = safetwosum(d_high, T::div_up(d_low_tmp, tmp));
+                let d = fasttwosum(d_high, T::div_up(d_low_tmp, tmp));
                 DFloat::_from_pair_raw(d.0, d.1)
             } else {
                 let high_err = (high_err.clone() - S::unit_underflow()) -
@@ -162,7 +162,7 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundDiv for RWDFloatFma<S, 
                 } else {
                     T::add_up(b_high, b_low)
                 };
-                let d = safetwosum(d_high, T::div_up(d_low_tmp, tmp));
+                let d = fasttwosum(d_high, T::div_up(d_low_tmp, tmp));
                 DFloat::_from_pair_raw(d.0, d.1)
             }
         }
@@ -192,7 +192,7 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundDiv for RWDFloatFma<S, 
                 } else {
                     T::add_down(b_high, b_low)
                 };
-                let d = safetwosum(d_high, T::div_down(d_low_tmp, tmp));
+                let d = fasttwosum(d_high, T::div_down(d_low_tmp, tmp));
                 DFloat::_from_pair_raw(d.0, d.1)
             } else {
                 let high_err = (high_err.clone() + S::unit_underflow()) +
@@ -205,7 +205,7 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundDiv for RWDFloatFma<S, 
                 } else {
                     T::add_down(b_high, b_low)
                 };
-                let d = safetwosum(d_high, T::div_down(d_low_tmp, tmp));
+                let d = fasttwosum(d_high, T::div_down(d_low_tmp, tmp));
                 DFloat::_from_pair_raw(d.0, d.1)
             }
         }
@@ -230,7 +230,7 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S> + RoundSqrt> RoundSqrt for RW
             } else {
                 T::add_up(T::sqrt_up(T::add_up(a_h, a_l)), r_high.clone())
             };
-            let r = safetwosum(r_high, T::div_up(r_low_tmp, tmp));
+            let r = fasttwosum(r_high, T::div_up(r_low_tmp, tmp));
             DFloat::_from_pair_raw(r.0, r.1)
         }
     }
@@ -251,7 +251,7 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S> + RoundSqrt> RoundSqrt for RW
             } else {
                 T::add_down(T::sqrt_down(T::add_down(a_h, a_l)), r_high.clone())
             };
-            let r = safetwosum(r_high, T::div_down(r_low_tmp, tmp));
+            let r = fasttwosum(r_high, T::div_down(r_low_tmp, tmp));
             DFloat::_from_pair_raw(r.0, r.1)
         }
     }
