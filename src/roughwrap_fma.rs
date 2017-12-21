@@ -170,40 +170,32 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundDiv for RWDFloatFma<S, 
         } else {
             let high_err = fma(b_high.clone(), -d_high.clone(), a_high);
             let low_err = fma(-b_low.clone(), d_high.clone(), a_low);
-            if b_high > S::zero() {
+            let dl_numer = if b_high > S::zero() {
                 let high_err = (high_err.clone() + S::unit_underflow()) +
                                high_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
                 let low_err = (low_err.clone() + S::unit_underflow()) +
                               low_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
-                let d_low_tmp = T::add_up(high_err, low_err);
-                let tmp = if d_low_tmp >= S::zero() {
-                    T::add_down(b_high, b_low)
-                } else {
-                    T::add_up(b_high, b_low)
-                };
-                let d = fasttwosum(d_high, T::div_up(d_low_tmp, tmp));
-                if d.0 == S::neg_infinity() {
-                    DFloat::min_value()
-                } else {
-                    DFloat::_from_pair_raw(d.0, d.1)
-                }
+                T::add_up(high_err, low_err)
             } else {
                 let high_err = (high_err.clone() - S::unit_underflow()) -
                                high_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
                 let low_err = (low_err.clone() - S::unit_underflow()) -
                               low_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
-                let d_low_tmp = T::add_down(high_err, low_err);
-                let tmp = if d_low_tmp >= S::zero() {
-                    T::add_down(b_high, b_low)
-                } else {
-                    T::add_up(b_high, b_low)
-                };
-                let d = fasttwosum(d_high, T::div_up(d_low_tmp, tmp));
-                if d.0 == S::neg_infinity() {
-                    DFloat::min_value()
-                } else {
-                    DFloat::_from_pair_raw(d.0, d.1)
-                }
+                T::add_down(high_err, low_err)
+            };
+
+            let dl_denom = if dl_numer >= S::zero() {
+                T::add_down(b_high, b_low)
+            } else {
+                T::add_up(b_high, b_low)
+            };
+
+            let d = fasttwosum(d_high, T::div_up(dl_numer, dl_denom));
+
+            if d.0 == S::neg_infinity() {
+                DFloat::min_value()
+            } else {
+                DFloat::_from_pair_raw(d.0, d.1)
             }
         }
     }
@@ -222,40 +214,32 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundDiv for RWDFloatFma<S, 
         } else {
             let high_err = fma(b_high.clone(), -d_high.clone(), a_high);
             let low_err = fma(-b_low.clone(), d_high.clone(), a_low);
-            if b_high > S::zero() {
+            let dl_numer = if b_high > S::zero() {
                 let high_err = (high_err.clone() - S::unit_underflow()) -
                                high_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
                 let low_err = (low_err.clone() - S::unit_underflow()) -
                               low_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
-                let d_low_tmp = T::add_down(high_err, low_err);
-                let tmp = if d_low_tmp >= S::zero() {
-                    T::add_up(b_high, b_low)
-                } else {
-                    T::add_down(b_high, b_low)
-                };
-                let d = fasttwosum(d_high, T::div_down(d_low_tmp, tmp));
-                if d.0 == S::infinity() {
-                    DFloat::max_value()
-                } else {
-                    DFloat::_from_pair_raw(d.0, d.1)
-                }
+                T::add_down(high_err, low_err)
             } else {
                 let high_err = (high_err.clone() + S::unit_underflow()) +
                                high_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
                 let low_err = (low_err.clone() + S::unit_underflow()) +
                               low_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
-                let d_low_tmp = T::add_up(high_err, low_err);
-                let tmp = if d_low_tmp >= S::zero() {
-                    T::add_up(b_high, b_low)
-                } else {
-                    T::add_down(b_high, b_low)
-                };
-                let d = fasttwosum(d_high, T::div_down(d_low_tmp, tmp));
-                if d.0 == S::infinity() {
-                    DFloat::max_value()
-                } else {
-                    DFloat::_from_pair_raw(d.0, d.1)
-                }
+                T::add_up(high_err, low_err)
+            };
+
+            let dl_denom = if dl_numer >= S::zero() {
+                T::add_up(b_high, b_low)
+            } else {
+                T::add_down(b_high, b_low)
+            };
+
+            let d = fasttwosum(d_high, T::div_down(dl_numer, dl_denom));
+
+            if d.0 == S::infinity() {
+                DFloat::max_value()
+            } else {
+                DFloat::_from_pair_raw(d.0, d.1)
             }
         }
     }
@@ -273,13 +257,13 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S> + RoundSqrt> RoundSqrt for RW
             let high_err = fma(r_high.clone(), -r_high.clone(), a_h.clone());
             let high_err = (high_err.clone() + S::unit_underflow()) +
                            high_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
-            let r_low_tmp = T::add_up(high_err, a_l.clone());
-            let tmp = if r_low_tmp > S::zero() {
+            let rl_numer = T::add_up(high_err, a_l.clone());
+            let rl_denom = if rl_numer > S::zero() {
                 T::add_down(T::sqrt_down(T::add_down(a_h, a_l)), r_high.clone())
             } else {
                 T::add_up(T::sqrt_up(T::add_up(a_h, a_l)), r_high.clone())
             };
-            let r = fasttwosum(r_high, T::div_up(r_low_tmp, tmp));
+            let r = fasttwosum(r_high, T::div_up(rl_numer, rl_denom));
             DFloat::_from_pair_raw(r.0, r.1)
         }
     }
@@ -294,13 +278,13 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S> + RoundSqrt> RoundSqrt for RW
             let high_err = fma(r_high.clone(), -r_high.clone(), a_h.clone());
             let high_err = (high_err.clone() - S::unit_underflow()) -
                            high_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
-            let r_low_tmp = T::add_down(high_err, a_l.clone());
-            let tmp = if r_low_tmp > S::zero() {
+            let rl_numer = T::add_down(high_err, a_l.clone());
+            let rl_denom = if rl_numer > S::zero() {
                 T::add_up(T::sqrt_up(T::add_up(a_h, a_l)), r_high.clone())
             } else {
                 T::add_down(T::sqrt_down(T::add_down(a_h, a_l)), r_high.clone())
             };
-            let r = fasttwosum(r_high, T::div_down(r_low_tmp, tmp));
+            let r = fasttwosum(r_high, T::div_down(rl_numer, rl_denom));
             DFloat::_from_pair_raw(r.0, r.1)
         }
     }
