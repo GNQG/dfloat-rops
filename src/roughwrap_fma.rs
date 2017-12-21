@@ -4,6 +4,7 @@ use core::marker::PhantomData;
 use dfloat::DFloat;
 use float_traits::IEEE754Float;
 use roundops::*;
+use roundops::utils::FloatSuccPred;
 use safeeft::{fasttwosum, safetwosum_fma as safetwosum, safetwoproduct_fma as safetwoproduct};
 use fma::{fma, Fma};
 
@@ -18,11 +19,16 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundAdd for RWDFloatFma<S, 
             if sh == S::infinity() {
                 DFloat::infinity()
             } else {
-                DFloat::min_value()
+                DFloat::_from_pair_raw(S::min_value().succ(),
+                                       (S::min_value() * S::eps() / S::radix() / S::radix()).pred())
             }
         } else {
             let (sh, sl) = fasttwosum(sh, T::add_up(T::add_up(a_low, b_low), sl));
-            DFloat::_from_pair_raw(sh, sl)
+            if sh == S::neg_infinity() {
+                DFloat::min_value()
+            } else {
+                DFloat::_from_pair_raw(sh, sl)
+            }
         }
     }
     fn add_down(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
@@ -32,11 +38,16 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundAdd for RWDFloatFma<S, 
             if sh == S::neg_infinity() {
                 DFloat::neg_infinity()
             } else {
-                DFloat::max_value()
+                DFloat::_from_pair_raw(S::max_value().pred(),
+                                       (S::max_value() * S::eps() / S::radix() / S::radix()).succ())
             }
         } else {
             let (sh, sl) = fasttwosum(sh, T::add_down(T::add_down(a_low, b_low), sl));
-            DFloat::_from_pair_raw(sh, sl)
+            if sh == S::infinity() {
+                DFloat::max_value()
+            } else {
+                DFloat::_from_pair_raw(sh, sl)
+            }
         }
     }
 }
@@ -50,11 +61,16 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundSub for RWDFloatFma<S, 
             if sh == S::infinity() {
                 DFloat::infinity()
             } else {
-                DFloat::min_value()
+                DFloat::_from_pair_raw(S::min_value().succ(),
+                                       (S::min_value() * S::eps() / S::radix() / S::radix()).pred())
             }
         } else {
             let (sh, sl) = fasttwosum(sh, T::add_up(T::sub_up(a_low, b_low), sl));
-            DFloat::_from_pair_raw(sh, sl)
+            if sh == S::neg_infinity() {
+                DFloat::min_value()
+            } else {
+                DFloat::_from_pair_raw(sh, sl)
+            }
         }
     }
     fn sub_down(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
@@ -64,11 +80,16 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundSub for RWDFloatFma<S, 
             if sh == S::neg_infinity() {
                 DFloat::neg_infinity()
             } else {
-                DFloat::max_value()
+                DFloat::_from_pair_raw(S::max_value().pred(),
+                                       (S::max_value() * S::eps() / S::radix() / S::radix()).succ())
             }
         } else {
             let (sh, sl) = fasttwosum(sh, T::add_down(T::sub_down(a_low, b_low), sl));
-            DFloat::_from_pair_raw(sh, sl)
+            if sh == S::infinity() {
+                DFloat::max_value()
+            } else {
+                DFloat::_from_pair_raw(sh, sl)
+            }
         }
     }
 }
@@ -84,7 +105,8 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundMul for RWDFloatFma<S, 
             if mh == S::infinity() {
                 DFloat::infinity()
             } else {
-                DFloat::min_value()
+                DFloat::_from_pair_raw(S::min_value().succ().succ(),
+                                       S::min_value() * S::eps() * S::eps() / S::radix())
             }
         } else {
             let tmp_prod = (T::mul_up(a_low.clone(), b_high),
@@ -94,7 +116,11 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundMul for RWDFloatFma<S, 
                                        a_low),
                                       b_low));
             let (mh, ml) = fasttwosum(mh, T::add_up(T::add_up(ml, tmp_prod.0), tmp_prod.1));
-            DFloat::_from_pair_raw(mh, ml)
+            if mh == S::neg_infinity() {
+                DFloat::min_value()
+            } else {
+                DFloat::_from_pair_raw(mh, ml)
+            }
         }
     }
 
@@ -107,7 +133,8 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundMul for RWDFloatFma<S, 
             if mh == S::neg_infinity() {
                 DFloat::neg_infinity()
             } else {
-                DFloat::max_value()
+                DFloat::_from_pair_raw(S::max_value().pred().pred(),
+                                       S::max_value() * S::eps() * S::eps() / S::radix())
             }
         } else {
             let tmp_prod = (T::mul_down(a_low.clone(), b_high),
@@ -117,7 +144,11 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundMul for RWDFloatFma<S, 
                                          a_low),
                                         b_low));
             let (mh, ml) = fasttwosum(mh, T::add_down(T::add_down(ml, tmp_prod.0), tmp_prod.1));
-            DFloat::_from_pair_raw(mh, ml)
+            if mh == S::infinity() {
+                DFloat::max_value()
+            } else {
+                DFloat::_from_pair_raw(mh, ml)
+            }
         }
     }
 }
@@ -131,7 +162,8 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundDiv for RWDFloatFma<S, 
             if d_high == S::infinity() {
                 DFloat::infinity()
             } else {
-                DFloat::min_value()
+                DFloat::_from_pair_raw(S::min_value().succ(),
+                                       S::max_value().pred() * S::eps() / S::radix() / S::radix())
             }
         } else if b_high.is_infinite() {
             DFloat::from_single(d_high)
@@ -150,7 +182,11 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundDiv for RWDFloatFma<S, 
                     T::add_up(b_high, b_low)
                 };
                 let d = fasttwosum(d_high, T::div_up(d_low_tmp, tmp));
-                DFloat::_from_pair_raw(d.0, d.1)
+                if d.0 == S::neg_infinity() {
+                    DFloat::min_value()
+                } else {
+                    DFloat::_from_pair_raw(d.0, d.1)
+                }
             } else {
                 let high_err = (high_err.clone() - S::unit_underflow()) -
                                high_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
@@ -163,7 +199,11 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundDiv for RWDFloatFma<S, 
                     T::add_up(b_high, b_low)
                 };
                 let d = fasttwosum(d_high, T::div_up(d_low_tmp, tmp));
-                DFloat::_from_pair_raw(d.0, d.1)
+                if d.0 == S::neg_infinity() {
+                    DFloat::min_value()
+                } else {
+                    DFloat::_from_pair_raw(d.0, d.1)
+                }
             }
         }
     }
@@ -174,7 +214,8 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundDiv for RWDFloatFma<S, 
             if d_high == S::infinity() {
                 DFloat::infinity()
             } else {
-                DFloat::min_value()
+                DFloat::_from_pair_raw(S::max_value().pred(),
+                                       S::min_value().succ() * S::eps() / S::radix() / S::radix())
             }
         } else if b_high.is_infinite() {
             DFloat::from_single(d_high)
@@ -193,7 +234,11 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundDiv for RWDFloatFma<S, 
                     T::add_down(b_high, b_low)
                 };
                 let d = fasttwosum(d_high, T::div_down(d_low_tmp, tmp));
-                DFloat::_from_pair_raw(d.0, d.1)
+                if d.0 == S::infinity() {
+                    DFloat::max_value()
+                } else {
+                    DFloat::_from_pair_raw(d.0, d.1)
+                }
             } else {
                 let high_err = (high_err.clone() + S::unit_underflow()) +
                                high_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
@@ -206,7 +251,11 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundDiv for RWDFloatFma<S, 
                     T::add_down(b_high, b_low)
                 };
                 let d = fasttwosum(d_high, T::div_down(d_low_tmp, tmp));
-                DFloat::_from_pair_raw(d.0, d.1)
+                if d.0 == S::infinity() {
+                    DFloat::max_value()
+                } else {
+                    DFloat::_from_pair_raw(d.0, d.1)
+                }
             }
         }
     }
