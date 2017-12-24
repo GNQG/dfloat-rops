@@ -109,13 +109,10 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundMul for RWDFloatFma<S, 
                                        S::min_value() * S::eps() * S::eps() / S::radix())
             }
         } else {
-            let tmp_prod = (T::mul_up(a_low.clone(), b_high),
-                            T::mul_up(a_high.clone() +
-                                      (a_high.abs() *
-                                       (S::eps() / S::radix() * (S::one() + S::eps())) +
-                                       a_low),
-                                      b_low));
-            let (mh, ml) = fasttwosum(mh, T::add_up(T::add_up(ml, tmp_prod.0), tmp_prod.1));
+            let (ahbl, albh, albl) = (T::mul_up(a_high, b_low.clone()),
+                                      T::mul_up(a_low.clone(), b_high),
+                                      T::mul_up(a_low, b_low));
+            let (mh, ml) = fasttwosum(mh, T::add_up(T::add_up(ml, ahbl), T::add_up(albh, albl)));
             if mh == S::neg_infinity() {
                 DFloat::min_value()
             } else {
@@ -137,13 +134,11 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundMul for RWDFloatFma<S, 
                                        S::max_value() * S::eps() * S::eps() / S::radix())
             }
         } else {
-            let tmp_prod = (T::mul_down(a_low.clone(), b_high),
-                            T::mul_down(a_high.clone() -
-                                        (a_high.abs() *
-                                         (S::eps() / S::radix() * (S::one() + S::eps())) +
-                                         a_low),
-                                        b_low));
-            let (mh, ml) = fasttwosum(mh, T::add_down(T::add_down(ml, tmp_prod.0), tmp_prod.1));
+            let (ahbl, albh, albl) = (T::mul_down(a_high, b_low.clone()),
+                                      T::mul_down(a_low.clone(), b_high),
+                                      T::mul_down(a_low, b_low));
+            let (mh, ml) = fasttwosum(mh,
+                                      T::add_down(T::add_down(ml, ahbl), T::add_down(albh, albl)));
             if mh == S::infinity() {
                 DFloat::max_value()
             } else {
