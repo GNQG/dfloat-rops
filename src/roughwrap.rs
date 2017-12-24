@@ -282,12 +282,21 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S> + RoundSqrt> RoundSqrt for RWDFloat
             let r_high = a_h.clone().sqrt();
             let (neg_a_high, neg_a_low) = safetwoproduct(-r_high.clone(), r_high.clone());
             let neg_a_low = neg_a_low + (S::one() + S::one() + S::one()) * S::unit_underflow();
-            let rl_numer = T::add_up(T::add_up(neg_a_high + a_h.clone(), a_l.clone()), // safe
-                                     neg_a_low.clone());
+            let rl_numer = T::add_up(neg_a_high + a_h.clone(), // safe
+                                     T::add_up(a_l.clone(), neg_a_low.clone()));
             let rl_denom = if rl_numer > S::zero() {
-                T::add_down(T::sqrt_down(T::add_down(a_h, a_l)), r_high.clone())
+                // a_h > 0
+                T::add_down(T::sqrt_down(a_h.clone() +
+                                         (a_l -
+                                          a_h.abs() *
+                                          (S::eps() / S::radix() * (S::one() + S::eps())))),
+                            r_high.clone())
             } else {
-                T::add_up(T::sqrt_up(T::add_up(a_h, a_l)), r_high.clone())
+                // a_h > 0
+                T::add_up(T::sqrt_up(a_h.clone() +
+                                     (a_l +
+                                      a_h.abs() * (S::eps() / S::radix() * (S::one() + S::eps())))),
+                          r_high.clone())
             };
             let r = fasttwosum(r_high, T::div_up(rl_numer, rl_denom));
             DFloat::_from_pair_raw(r.0, r.1)
@@ -303,12 +312,21 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S> + RoundSqrt> RoundSqrt for RWDFloat
             let r_high = a_h.clone().sqrt();
             let (neg_a_high, neg_a_low) = safetwoproduct(-r_high.clone(), r_high.clone());
             let neg_a_low = neg_a_low - (S::one() + S::one() + S::one()) * S::unit_underflow();
-            let rl_numer = T::add_down(T::add_down(neg_a_high + a_h.clone(), a_l.clone()), // safe
-                                       neg_a_low.clone());
+            let rl_numer = T::add_down(neg_a_high + a_h.clone(), // safe
+                                       T::add_down(a_l.clone(), neg_a_low.clone()));
             let rl_denom = if rl_numer > S::zero() {
-                T::add_up(T::sqrt_up(T::add_up(a_h, a_l)), r_high.clone())
+                // a_h > 0
+                T::add_up(T::sqrt_up(a_h.clone() +
+                                     (a_l +
+                                      a_h.abs() * (S::eps() / S::radix() * (S::one() + S::eps())))),
+                          r_high.clone())
             } else {
-                T::add_down(T::sqrt_down(T::add_down(a_h, a_l)), r_high.clone())
+                // a_h > 0
+                T::add_down(T::sqrt_down(a_h.clone() +
+                                         (a_l -
+                                          a_h.abs() *
+                                          (S::eps() / S::radix() * (S::one() + S::eps())))),
+                            r_high.clone())
             };
             let r = fasttwosum(r_high, T::div_down(rl_numer, rl_denom));
             DFloat::_from_pair_raw(r.0, r.1)

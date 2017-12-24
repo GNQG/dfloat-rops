@@ -254,9 +254,16 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S> + RoundSqrt> RoundSqrt for RW
                            high_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
             let rl_numer = T::add_up(high_err, a_l.clone());
             let rl_denom = if rl_numer > S::zero() {
-                T::add_down(T::sqrt_down(T::add_down(a_h, a_l)), r_high.clone())
+                T::add_down(T::sqrt_down(a_h.clone() +
+                                         (a_l -
+                                          a_h.abs() *
+                                          (S::eps() / S::radix() * (S::one() + S::eps())))),
+                            r_high.clone())
             } else {
-                T::add_up(T::sqrt_up(T::add_up(a_h, a_l)), r_high.clone())
+                T::add_up(T::sqrt_up(a_h.clone() +
+                                     (a_l +
+                                      a_h.abs() * (S::eps() / S::radix() * (S::one() + S::eps())))),
+                          r_high.clone())
             };
             let r = fasttwosum(r_high, T::div_up(rl_numer, rl_denom));
             DFloat::_from_pair_raw(r.0, r.1)
@@ -275,9 +282,16 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S> + RoundSqrt> RoundSqrt for RW
                            high_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
             let rl_numer = T::add_down(high_err, a_l.clone());
             let rl_denom = if rl_numer > S::zero() {
-                T::add_up(T::sqrt_up(T::add_up(a_h, a_l)), r_high.clone())
+                T::add_up(T::sqrt_up(a_h.clone() +
+                                     (a_l +
+                                      a_h.abs() * (S::eps() / S::radix() * (S::one() + S::eps())))),
+                          r_high.clone())
             } else {
-                T::add_down(T::sqrt_down(T::add_down(a_h, a_l)), r_high.clone())
+                T::add_down(T::sqrt_down(a_h.clone() +
+                                         (a_l -
+                                          a_h.abs() *
+                                          (S::eps() / S::radix() * (S::one() + S::eps())))),
+                            r_high.clone())
             };
             let r = fasttwosum(r_high, T::div_down(rl_numer, rl_denom));
             DFloat::_from_pair_raw(r.0, r.1)
