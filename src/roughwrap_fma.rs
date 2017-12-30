@@ -10,8 +10,12 @@ use fma::{fma, Fma};
 
 pub struct RWDFloatFma<S: IEEE754Float + Fma + Clone, T: RoundOps<S>>(PhantomData<(S, T)>);
 
-impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundAdd for RWDFloatFma<S, T> {
+impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundingMethod for RWDFloatFma<S, T> {
+    type HostMethod = T::HostMethod;
     type Num = DFloat<S>;
+}
+
+impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundAdd for RWDFloatFma<S, T> {
     fn add_up(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
         let ((a_high, a_low), (b_high, b_low)) = (a.decomposite(), b.decomposite());
         let (sh, sl) = safetwosum(a_high.clone(), b_high.clone());
@@ -25,7 +29,13 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundAdd for RWDFloatFma<S, 
                 )
             }
         } else {
-            let (sh, sl) = fasttwosum(sh, T::add_up(T::add_up(a_low, b_low), sl));
+            #[inline(never)]
+            fn tmp<S: IEEE754Float + Clone, T: RoundOps<S>>(sl: S, al: S, bl: S) -> S {
+                let (w_sl, w_al, w_bl) = rnum_init!(<direction::Upward, S, T>,
+                    (sl, al, bl));
+                (w_sl + w_al + w_bl).extract()
+            }
+            let (sh, sl) = fasttwosum(sh, tmp::<S, T>(sl, a_low, b_low));
             if sh == S::neg_infinity() {
                 DFloat::min_value()
             } else {
@@ -46,7 +56,13 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundAdd for RWDFloatFma<S, 
                 )
             }
         } else {
-            let (sh, sl) = fasttwosum(sh, T::add_down(T::add_down(a_low, b_low), sl));
+            #[inline(never)]
+            fn tmp<S: IEEE754Float + Clone, T: RoundOps<S>>(sl: S, al: S, bl: S) -> S {
+                let (w_sl, w_al, w_bl) = rnum_init!(<direction::Downward, S, T>,
+                    (sl, al, bl));
+                (w_sl + w_al + w_bl).extract()
+            }
+            let (sh, sl) = fasttwosum(sh, tmp::<S, T>(sl, a_low, b_low));
             if sh == S::infinity() {
                 DFloat::max_value()
             } else {
@@ -57,7 +73,6 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundAdd for RWDFloatFma<S, 
 }
 
 impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundSub for RWDFloatFma<S, T> {
-    type Num = DFloat<S>;
     fn sub_up(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
         let ((a_high, a_low), (b_high, b_low)) = (a.decomposite(), b.decomposite());
         let (sh, sl) = safetwosum(a_high.clone(), -b_high.clone());
@@ -71,7 +86,13 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundSub for RWDFloatFma<S, 
                 )
             }
         } else {
-            let (sh, sl) = fasttwosum(sh, T::add_up(T::sub_up(a_low, b_low), sl));
+            #[inline(never)]
+            fn tmp<S: IEEE754Float + Clone, T: RoundOps<S>>(sl: S, al: S, bl: S) -> S {
+                let (w_sl, w_al, w_bl) = rnum_init!(<direction::Upward, S, T>,
+                    (sl, al, bl));
+                (w_sl + w_al - w_bl).extract()
+            }
+            let (sh, sl) = fasttwosum(sh, tmp::<S, T>(sl, a_low, b_low));
             if sh == S::neg_infinity() {
                 DFloat::min_value()
             } else {
@@ -92,7 +113,13 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundSub for RWDFloatFma<S, 
                 )
             }
         } else {
-            let (sh, sl) = fasttwosum(sh, T::add_down(T::sub_down(a_low, b_low), sl));
+            #[inline(never)]
+            fn tmp<S: IEEE754Float + Clone, T: RoundOps<S>>(sl: S, al: S, bl: S) -> S {
+                let (w_sl, w_al, w_bl) = rnum_init!(<direction::Downward, S, T>,
+                    (sl, al, bl));
+                (w_sl + w_al - w_bl).extract()
+            }
+            let (sh, sl) = fasttwosum(sh, tmp::<S, T>(sl, a_low, b_low));
             if sh == S::infinity() {
                 DFloat::max_value()
             } else {
@@ -103,7 +130,6 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundSub for RWDFloatFma<S, 
 }
 
 impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundMul for RWDFloatFma<S, T> {
-    type Num = DFloat<S>;
     fn mul_up(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
         let ((a_high, a_low), (b_high, b_low)) = (a.decomposite(), b.decomposite());
         let (mh, ml) = safetwoproduct(a_high.clone(), b_high.clone());
@@ -119,21 +145,20 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundMul for RWDFloatFma<S, 
                 )
             }
         } else {
-            let (ahbl, alb) = (
-                T::mul_up(a_high, b_low.clone()),
-                T::mul_up(
-                    a_low.clone(),
-                    if a_low * b_high.clone() > S::zero() {
-                        // |below| > |b_h+b_l|
-                        b_high.clone() +
-                            ((b_high * S::eps() / S::radix() * (S::one() + S::eps())) + b_low)
-                    } else {
-                        b_high.clone() -
-                            ((b_high * S::eps() / S::radix() * (S::one() + S::eps())) + b_low)
-                    },
-                ),
-            );
-            let (mh, ml) = fasttwosum(mh, T::add_up(T::add_up(ml, ahbl), alb));
+            let b_bound = if a_low.clone() * b_high.clone() > S::zero() {
+                // |below| > |b_h+b_l|
+                b_high.clone() +
+                ((b_high * (S::eps() / S::radix() * (S::one() + S::eps()))) + b_low.clone())
+            } else {
+                b_high.clone() -
+                ((b_high * (S::eps() / S::radix() * (S::one() + S::eps()))) + b_low.clone())
+            };
+            let ml = {
+                let (w_ml, w_ah, w_al, w_bl, w_b_bound) = rnum_init!(<direction::Upward, S, T>,
+                        (ml,a_high, a_low, b_low, b_bound));
+                (w_ml + w_ah * w_bl + w_al * w_b_bound).extract()
+            };
+            let (mh, ml) = fasttwosum(mh, ml);
             if mh == S::neg_infinity() {
                 DFloat::min_value()
             } else {
@@ -157,21 +182,20 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundMul for RWDFloatFma<S, 
                 )
             }
         } else {
-            let (ahbl, alb) = (
-                T::mul_down(a_high, b_low.clone()),
-                T::mul_down(
-                    a_low.clone(),
-                    if a_low * b_high.clone() > S::zero() {
-                        // |below| < |b_h+b_l|
-                        b_high.clone() -
-                            ((b_high * S::eps() / S::radix() * (S::one() + S::eps())) + b_low)
-                    } else {
-                        b_high.clone() +
-                            ((b_high * S::eps() / S::radix() * (S::one() + S::eps())) + b_low)
-                    },
-                ),
-            );
-            let (mh, ml) = fasttwosum(mh, T::add_down(T::add_down(ml, ahbl), alb));
+            let b_bound = if a_low.clone() * b_high.clone() > S::zero() {
+                // |below| > |b_h+b_l|
+                b_high.clone() -
+                ((b_high * (S::eps() / S::radix() * (S::one() + S::eps()))) + b_low.clone())
+            } else {
+                b_high.clone() +
+                ((b_high * (S::eps() / S::radix() * (S::one() + S::eps()))) + b_low.clone())
+            };
+            let ml = {
+                let (w_ml, w_ah, w_al, w_bl, w_b_bound) = rnum_init!(<direction::Downward, S, T>,
+                        (ml,a_high, a_low, b_low, b_bound));
+                (w_ml + w_ah * w_bl + w_al * w_b_bound).extract()
+            };
+            let (mh, ml) = fasttwosum(mh, ml);
             if mh == S::infinity() {
                 DFloat::max_value()
             } else {
@@ -182,7 +206,6 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundMul for RWDFloatFma<S, 
 }
 
 impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundDiv for RWDFloatFma<S, T> {
-    type Num = DFloat<S>;
     fn div_up(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
         let ((a_high, a_low), (b_high, b_low)) = (a.decomposite(), b.decomposite());
         let d_high = a_high.clone() / b_high.clone();

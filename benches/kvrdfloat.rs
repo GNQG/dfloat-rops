@@ -12,7 +12,7 @@ use roundops::*;
 use roundops::methods::EmulationRegular;
 use dfloat_rops::KVRDFloat;
 
-type KVRDF64 = KVRDFloat<f64, EmulationRegular<f64>>;
+type KVRDF64 = KVRDFloat<f64, EmulationRegular<f64>, rmode::DefaultRounding>;
 
 #[bench]
 fn bench_add(b: &mut test::Bencher) {

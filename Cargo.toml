@@ -12,7 +12,7 @@ categories = ["algorithms"]
 [dependencies]
 float-traits = "^0.0.3"
 safeeft = "^0.0.5"
-roundops = {git = "https://github.com/GNQG/roundops", rev = "e6af2a2ba6d81df91945ea36b7c340bf566188b8"}
+roundops = {git = "https://github.com/GNQG/roundops", rev = "4dfcb38fecbd46c81446a3ab2759e165ba5296ac"}
 dfloat = {git = "https://github.com/GNQG/dfloat", rev = "65646a7ef55fce8965ffd51691deaac381297979"}
 fma = {version = "^0.1.0", optional = true}
 
