@@ -648,7 +648,7 @@ impl<S, T> RoundAdd for KVRDFloat<S, T, $U>
           T: RoundingMethod<HostMethod = $U, Num = S> + RoundOps<S> + RoundSqrt + Clone
 {
     fn add_up(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
-        let ((ah, al), (bh, bl)) = (a.decomposite(), b.decomposite());
+        let ((ah, al), (bh, bl)) = (a.into_tuple(), b.into_tuple());
         let (sh, sl) = safetwosum(ah.clone(), bh.clone());
         if sh.is_infinite() {
             if sh == S::infinity() {
@@ -659,11 +659,11 @@ impl<S, T> RoundAdd for KVRDFloat<S, T, $U>
         } else {
             let (sh, sl) = safetwosum(sh.clone(),
                                       Self::add_up_lower((ah, al), (bh, bl), (sh, sl)));
-            DFloat::_from_pair_raw(sh, sl)
+            unsafe{ DFloat::from_double_components_unchecked(sh, sl) }
         }
     }
     fn add_down(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
-        let ((ah, al), (bh, bl)) = (a.decomposite(), b.decomposite());
+        let ((ah, al), (bh, bl)) = (a.into_tuple(), b.into_tuple());
         let (sh, sl) = safetwosum(ah.clone(), bh.clone());
         if sh.is_infinite() {
             if sh == S::neg_infinity() {
@@ -674,7 +674,7 @@ impl<S, T> RoundAdd for KVRDFloat<S, T, $U>
         } else {
             let (sh, sl) = safetwosum(sh.clone(),
                                       Self::add_down_lower((ah, al), (bh, bl), (sh, sl)));
-            DFloat::_from_pair_raw(sh, sl)
+            unsafe{ DFloat::from_double_components_unchecked(sh, sl) }
         }
     }
 }
@@ -684,7 +684,7 @@ impl<S, T> RoundSub for KVRDFloat<S, T, $U>
           T: RoundingMethod<HostMethod = $U, Num = S> + RoundOps<S> + RoundSqrt + Clone
 {
     fn sub_up(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
-        let ((ah, al), (bh, bl)) = (a.decomposite(), b.decomposite());
+        let ((ah, al), (bh, bl)) = (a.into_tuple(), b.into_tuple());
         let (sh, sl) = safetwosum(ah.clone(), -bh.clone());
         if sh.is_infinite() {
             if sh == S::infinity() {
@@ -695,11 +695,11 @@ impl<S, T> RoundSub for KVRDFloat<S, T, $U>
         } else {
             let (sh, sl) = safetwosum(sh.clone(),
                                       Self::sub_up_lower((ah, al), (bh, bl), (sh, sl)));
-            DFloat::_from_pair_raw(sh, sl)
+            unsafe{ DFloat::from_double_components_unchecked(sh, sl) }
         }
     }
     fn sub_down(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
-        let ((ah, al), (bh, bl)) = (a.decomposite(), b.decomposite());
+        let ((ah, al), (bh, bl)) = (a.into_tuple(), b.into_tuple());
         let (sh, sl) = safetwosum(ah.clone(), -bh.clone());
         if sh.is_infinite() {
             if sh == S::neg_infinity() {
@@ -710,7 +710,7 @@ impl<S, T> RoundSub for KVRDFloat<S, T, $U>
         } else {
             let (sh, sl) = safetwosum(sh.clone(),
                                       Self::sub_down_lower((ah, al), (bh, bl), (sh, sl)));
-            DFloat::_from_pair_raw(sh, sl)
+            unsafe{ DFloat::from_double_components_unchecked(sh, sl) }
         }
     }
 }
@@ -720,7 +720,7 @@ impl<S, T> RoundMul for KVRDFloat<S, T, $U>
           T: RoundingMethod<HostMethod = $U, Num = S> + RoundOps<S> + RoundSqrt + Clone
 {
     fn mul_up(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
-        let ((ah, al), (bh, bl)) = (a.decomposite(), b.decomposite());
+        let ((ah, al), (bh, bl)) = (a.into_tuple(), b.into_tuple());
         let (mh, ml) = Self::safetwoproduct_up(ah.clone(), bh.clone());
         if mh.is_infinite() {
             if mh == S::infinity() {
@@ -731,12 +731,12 @@ impl<S, T> RoundMul for KVRDFloat<S, T, $U>
         } else {
             let (mh, ml) = safetwosum(mh.clone(),
                                       Self::mul_up_lower((ah, al), (bh, bl), (mh, ml)));
-            DFloat::_from_pair_raw(mh, ml)
+            unsafe{ DFloat::from_double_components_unchecked(mh, ml) }
         }
     }
 
     fn mul_down(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
-        let ((ah, al), (bh, bl)) = (a.decomposite(), b.decomposite());
+        let ((ah, al), (bh, bl)) = (a.into_tuple(), b.into_tuple());
         let (mh, ml) = Self::safetwoproduct_down(ah.clone(), bh.clone());
         if mh.is_infinite() {
             if mh == S::neg_infinity() {
@@ -747,7 +747,7 @@ impl<S, T> RoundMul for KVRDFloat<S, T, $U>
         } else {
             let (mh, ml) = safetwosum(mh.clone(),
                                       Self::mul_down_lower((ah, al), (bh, bl), (mh, ml)));
-            DFloat::_from_pair_raw(mh, ml)
+            unsafe{ DFloat::from_double_components_unchecked(mh, ml) }
         }
     }
 }
@@ -757,7 +757,7 @@ impl<S, T> RoundDiv for KVRDFloat<S, T, $U>
           T: RoundingMethod<HostMethod = $U, Num = S> + RoundOps<S> + RoundSqrt + Clone
 {
     fn div_up(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
-        let ((ah, al), (bh, bl)) = (a.decomposite(), b.decomposite());
+        let ((ah, al), (bh, bl)) = (a.into_tuple(), b.into_tuple());
         let dh = ah.clone() / bh.clone();
         if dh.is_infinite() {
             if dh == S::infinity() {
@@ -766,15 +766,15 @@ impl<S, T> RoundDiv for KVRDFloat<S, T, $U>
                 DFloat::min_value()
             }
         } else if bh.is_infinite() {
-            DFloat::from_single(dh)
+            DFloat::from_component(dh)
         } else {
             let d = safetwosum(dh.clone(),
                                Self::div_down_lower((ah, al), (bh, bl), (dh, S::zero())));
-            DFloat::_from_pair_raw(d.0, d.1)
+            unsafe{ DFloat::from_double_components_unchecked(d.0, d.1) }
         }
     }
     fn div_down(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
-        let ((ah, al), (bh, bl)) = (a.decomposite(), b.decomposite());
+        let ((ah, al), (bh, bl)) = (a.into_tuple(), b.into_tuple());
         let dh = ah.clone() / bh.clone();
         if dh.is_infinite() {
             if dh == S::infinity() {
@@ -783,11 +783,11 @@ impl<S, T> RoundDiv for KVRDFloat<S, T, $U>
                 DFloat::min_value()
             }
         } else if bh.is_infinite() {
-            DFloat::from_single(dh)
+            DFloat::from_component(dh)
         } else {
             let d = safetwosum(dh.clone(),
                                Self::div_down_lower((ah, al), (bh, bl), (dh, S::zero())));
-            DFloat::_from_pair_raw(d.0, d.1)
+            unsafe{ DFloat::from_double_components_unchecked(d.0, d.1) }
         }
     }
 }
@@ -797,7 +797,7 @@ impl<S, T> RoundSqrt for KVRDFloat<S, T, $U>
           T: RoundingMethod<HostMethod = $U, Num = S> + RoundOps<S> + RoundSqrt + Clone
 {
     fn sqrt_up(a: DFloat<S>) -> DFloat<S> {
-        let (ah, al) = a.decomposite();
+        let (ah, al) = a.into_tuple();
         if ah == S::infinity() {
             DFloat::infinity()
         } else if ah == S::zero() {
@@ -806,11 +806,11 @@ impl<S, T> RoundSqrt for KVRDFloat<S, T, $U>
             let rh = ah.clone().sqrt();
             let r = safetwosum(rh.clone(),
                                Self::sqrt_up_lower((ah, al), (rh, S::zero())));
-            DFloat::_from_pair_raw(r.0, r.1)
+            unsafe{ DFloat::from_double_components_unchecked(r.0, r.1) }
         }
     }
     fn sqrt_down(a: DFloat<S>) -> DFloat<S> {
-        let (ah, al) = a.decomposite();
+        let (ah, al) = a.into_tuple();
         if ah == S::infinity() {
             DFloat::infinity()
         } else if ah == S::zero() {
@@ -819,7 +819,7 @@ impl<S, T> RoundSqrt for KVRDFloat<S, T, $U>
             let rh = ah.clone().sqrt();
             let r = safetwosum(rh.clone(),
                                Self::sqrt_down_lower((ah, al), (rh, S::zero())));
-            DFloat::_from_pair_raw(r.0, r.1)
+            unsafe{ DFloat::from_double_components_unchecked(r.0, r.1) }
         }
     }
 }

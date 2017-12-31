@@ -16,14 +16,19 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundingMethod for RWDFloatRegular
 
 impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundAdd for RWDFloatRegular<S, T> {
     fn add_up(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
-        let ((a_high, a_low), (b_high, b_low)) = (a.decomposite(), b.decomposite());
+        let ((a_high, a_low), (b_high, b_low)) = (a.into_tuple(), b.into_tuple());
         let (sh, sl) = safetwosum(a_high.clone(), b_high.clone());
         if sh.is_infinite() {
             if sh == S::infinity() {
                 DFloat::infinity()
             } else {
-                DFloat::_from_pair_raw(S::min_value().succ(),
-                                       (S::min_value() * S::eps() / S::radix() / S::radix()).pred())
+                unsafe {
+                    DFloat::from_double_components_unchecked(S::min_value().succ(),
+                                                             (S::min_value() * S::eps() /
+                                                              S::radix() /
+                                                              S::radix())
+                                                                     .pred())
+                }
             }
         } else {
             #[inline(never)]
@@ -36,19 +41,24 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundAdd for RWDFloatRegular<S, T>
             if sh == S::neg_infinity() {
                 DFloat::min_value()
             } else {
-                DFloat::_from_pair_raw(sh, sl)
+                unsafe { DFloat::from_double_components_unchecked(sh, sl) }
             }
         }
     }
     fn add_down(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
-        let ((a_high, a_low), (b_high, b_low)) = (a.decomposite(), b.decomposite());
+        let ((a_high, a_low), (b_high, b_low)) = (a.into_tuple(), b.into_tuple());
         let (sh, sl) = safetwosum(a_high.clone(), b_high.clone());
         if sh.is_infinite() {
             if sh == S::neg_infinity() {
                 DFloat::neg_infinity()
             } else {
-                DFloat::_from_pair_raw(S::max_value().pred(),
-                                       (S::max_value() * S::eps() / S::radix() / S::radix()).succ())
+                unsafe {
+                    DFloat::from_double_components_unchecked(S::max_value().pred(),
+                                                             (S::max_value() * S::eps() /
+                                                              S::radix() /
+                                                              S::radix())
+                                                                     .succ())
+                }
             }
         } else {
             #[inline(never)]
@@ -61,7 +71,7 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundAdd for RWDFloatRegular<S, T>
             if sh == S::infinity() {
                 DFloat::max_value()
             } else {
-                DFloat::_from_pair_raw(sh, sl)
+                unsafe { DFloat::from_double_components_unchecked(sh, sl) }
             }
         }
     }
@@ -69,14 +79,19 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundAdd for RWDFloatRegular<S, T>
 
 impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundSub for RWDFloatRegular<S, T> {
     fn sub_up(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
-        let ((a_high, a_low), (b_high, b_low)) = (a.decomposite(), b.decomposite());
+        let ((a_high, a_low), (b_high, b_low)) = (a.into_tuple(), b.into_tuple());
         let (sh, sl) = safetwosum(a_high.clone(), -b_high.clone());
         if sh.is_infinite() {
             if sh == S::infinity() {
                 DFloat::infinity()
             } else {
-                DFloat::_from_pair_raw(S::min_value().succ(),
-                                       (S::min_value() * S::eps() / S::radix() / S::radix()).pred())
+                unsafe {
+                    DFloat::from_double_components_unchecked(S::min_value().succ(),
+                                                             (S::min_value() * S::eps() /
+                                                              S::radix() /
+                                                              S::radix())
+                                                                     .pred())
+                }
             }
         } else {
             #[inline(never)]
@@ -89,19 +104,24 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundSub for RWDFloatRegular<S, T>
             if sh == S::neg_infinity() {
                 DFloat::min_value()
             } else {
-                DFloat::_from_pair_raw(sh, sl)
+                unsafe { DFloat::from_double_components_unchecked(sh, sl) }
             }
         }
     }
     fn sub_down(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
-        let ((a_high, a_low), (b_high, b_low)) = (a.decomposite(), b.decomposite());
+        let ((a_high, a_low), (b_high, b_low)) = (a.into_tuple(), b.into_tuple());
         let (sh, sl) = safetwosum(a_high.clone(), -b_high.clone());
         if sh.is_infinite() {
             if sh == S::neg_infinity() {
                 DFloat::neg_infinity()
             } else {
-                DFloat::_from_pair_raw(S::max_value().pred(),
-                                       (S::max_value() * S::eps() / S::radix() / S::radix()).succ())
+                unsafe {
+                    DFloat::from_double_components_unchecked(S::max_value().pred(),
+                                                             (S::max_value() * S::eps() /
+                                                              S::radix() /
+                                                              S::radix())
+                                                                     .succ())
+                }
             }
         } else {
             #[inline(never)]
@@ -114,7 +134,7 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundSub for RWDFloatRegular<S, T>
             if sh == S::infinity() {
                 DFloat::max_value()
             } else {
-                DFloat::_from_pair_raw(sh, sl)
+                unsafe { DFloat::from_double_components_unchecked(sh, sl) }
             }
         }
     }
@@ -122,7 +142,7 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundSub for RWDFloatRegular<S, T>
 
 impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundMul for RWDFloatRegular<S, T> {
     fn mul_up(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
-        let ((a_high, a_low), (b_high, b_low)) = (a.decomposite(), b.decomposite());
+        let ((a_high, a_low), (b_high, b_low)) = (a.into_tuple(), b.into_tuple());
         let (mh, ml) = safetwoproduct(a_high.clone(), b_high.clone());
         // S. Boldo, Pitfalls of a Full Floating-Point Proof: Example on the Formal Proof of
         //           the Veltkamp/Dekker Algorithms, IJCAR 2006: Automated Reasoning, 2006
@@ -132,8 +152,11 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundMul for RWDFloatRegular<S, T>
             if mh == S::infinity() {
                 DFloat::infinity()
             } else {
-                DFloat::_from_pair_raw(S::min_value().succ().succ(),
-                                       S::min_value() * S::eps() * S::eps() / S::radix())
+                unsafe {
+                    DFloat::from_double_components_unchecked(S::min_value().succ().succ(),
+                                                             S::min_value() * S::eps() * S::eps() /
+                                                             S::radix())
+                }
             }
         } else {
             let b_bound = if a_low.clone() * b_high.clone() > S::zero() {
@@ -145,7 +168,8 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundMul for RWDFloatRegular<S, T>
                 ((b_high * (S::eps() / S::radix() * (S::one() + S::eps()))) + b_low.clone())
             };
             let ml = {
-                let (w_ml, w_ah, w_al, w_bl, w_b_bound) = rnum_init!(<direction::Upward, S, T>,
+                let (w_ml, w_ah, w_al, w_bl, w_b_bound) =
+                    rnum_init!(<direction::Upward, S, T>,
                         (ml,a_high, a_low, b_low, b_bound));
                 (w_ml + w_ah * w_bl + w_al * w_b_bound).extract()
             };
@@ -153,13 +177,13 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundMul for RWDFloatRegular<S, T>
             if mh == S::neg_infinity() {
                 DFloat::min_value()
             } else {
-                DFloat::_from_pair_raw(mh, ml)
+                unsafe { DFloat::from_double_components_unchecked(mh, ml) }
             }
         }
     }
 
     fn mul_down(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
-        let ((a_high, a_low), (b_high, b_low)) = (a.decomposite(), b.decomposite());
+        let ((a_high, a_low), (b_high, b_low)) = (a.into_tuple(), b.into_tuple());
         let (mh, ml) = safetwoproduct(a_high.clone(), b_high.clone());
         // S. Boldo, Pitfalls of a Full Floating-Point Proof: Example on the Formal Proof of
         //           the Veltkamp/Dekker Algorithms, IJCAR 2006: Automated Reasoning, 2006
@@ -169,8 +193,11 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundMul for RWDFloatRegular<S, T>
             if mh == S::neg_infinity() {
                 DFloat::neg_infinity()
             } else {
-                DFloat::_from_pair_raw(S::max_value().pred().pred(),
-                                       S::max_value() * S::eps() * S::eps() / S::radix())
+                unsafe {
+                    DFloat::from_double_components_unchecked(S::max_value().pred().pred(),
+                                                             S::max_value() * S::eps() * S::eps() /
+                                                             S::radix())
+                }
             }
         } else {
             let b_bound = if a_low.clone() * b_high.clone() > S::zero() {
@@ -182,7 +209,8 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundMul for RWDFloatRegular<S, T>
                 ((b_high * (S::eps() / S::radix() * (S::one() + S::eps()))) + b_low.clone())
             };
             let ml = {
-                let (w_ml, w_ah, w_al, w_bl, w_b_bound) = rnum_init!(<direction::Downward, S, T>,
+                let (w_ml, w_ah, w_al, w_bl, w_b_bound) =
+                    rnum_init!(<direction::Downward, S, T>,
                         (ml,a_high, a_low, b_low, b_bound));
                 (w_ml + w_ah * w_bl + w_al * w_b_bound).extract()
             };
@@ -190,7 +218,7 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundMul for RWDFloatRegular<S, T>
             if mh == S::infinity() {
                 DFloat::max_value()
             } else {
-                DFloat::_from_pair_raw(mh, ml)
+                unsafe { DFloat::from_double_components_unchecked(mh, ml) }
             }
         }
     }
@@ -198,17 +226,21 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundMul for RWDFloatRegular<S, T>
 
 impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundDiv for RWDFloatRegular<S, T> {
     fn div_up(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
-        let ((a_high, a_low), (b_high, b_low)) = (a.decomposite(), b.decomposite());
+        let ((a_high, a_low), (b_high, b_low)) = (a.into_tuple(), b.into_tuple());
         let d_high = a_high.clone() / b_high.clone();
         if d_high.is_infinite() {
             if d_high == S::infinity() {
                 DFloat::infinity()
             } else {
-                DFloat::_from_pair_raw(S::min_value().succ(),
-                                       S::max_value().pred() * S::eps() / S::radix() / S::radix())
+                unsafe {
+                    DFloat::from_double_components_unchecked(S::min_value().succ(),
+                                                             S::max_value().pred() * S::eps() /
+                                                             S::radix() /
+                                                             S::radix())
+                }
             }
         } else if b_high.is_infinite() {
-            DFloat::from_single(d_high)
+            DFloat::from_component(d_high)
         } else {
             let (neg_a_high, neg_a_low) = safetwoproduct(b_high.clone(), -d_high.clone());
             let dl_numer = if b_high > S::zero() {
@@ -255,22 +287,26 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundDiv for RWDFloatRegular<S, T>
             if dh == S::neg_infinity() {
                 DFloat::min_value()
             } else {
-                DFloat::_from_pair_raw(dh, dl)
+                unsafe { DFloat::from_double_components_unchecked(dh, dl) }
             }
         }
     }
     fn div_down(a: DFloat<S>, b: DFloat<S>) -> DFloat<S> {
-        let ((a_high, a_low), (b_high, b_low)) = (a.decomposite(), b.decomposite());
+        let ((a_high, a_low), (b_high, b_low)) = (a.into_tuple(), b.into_tuple());
         let d_high = a_high.clone() / b_high.clone();
         if d_high.is_infinite() {
             if d_high == S::infinity() {
                 DFloat::infinity()
             } else {
-                DFloat::_from_pair_raw(S::max_value().pred(),
-                                       S::min_value().succ() * S::eps() / S::radix() / S::radix())
+                unsafe {
+                    DFloat::from_double_components_unchecked(S::max_value().pred(),
+                                                             S::min_value().succ() * S::eps() /
+                                                             S::radix() /
+                                                             S::radix())
+                }
             }
         } else if b_high.is_infinite() {
-            DFloat::from_single(d_high)
+            DFloat::from_component(d_high)
         } else {
             let (neg_a_high, neg_a_low) = safetwoproduct(b_high.clone(), -d_high.clone());
             let dl_numer = if b_high > S::zero() {
@@ -317,7 +353,7 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundDiv for RWDFloatRegular<S, T>
             if d.0 == S::infinity() {
                 DFloat::max_value()
             } else {
-                DFloat::_from_pair_raw(d.0, d.1)
+                unsafe { DFloat::from_double_components_unchecked(d.0, d.1) }
             }
         }
     }
@@ -325,7 +361,7 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundDiv for RWDFloatRegular<S, T>
 
 impl<S: IEEE754Float + Clone, T: RoundOps<S> + RoundSqrt> RoundSqrt for RWDFloatRegular<S, T> {
     fn sqrt_up(a: DFloat<S>) -> DFloat<S> {
-        let (a_high, a_low) = a.decomposite();
+        let (a_high, a_low) = a.into_tuple();
         if a_high == S::infinity() {
             DFloat::infinity()
         } else if a_high == S::zero() {
@@ -349,11 +385,11 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S> + RoundSqrt> RoundSqrt for RWDFloat
                 (w_ah_bound.sqrt() + w_rh).extract()
             };
             let r = fasttwosum(r_high, T::div_up(rl_numer, rl_denom));
-            DFloat::_from_pair_raw(r.0, r.1)
+            unsafe { DFloat::from_double_components_unchecked(r.0, r.1) }
         }
     }
     fn sqrt_down(a: DFloat<S>) -> DFloat<S> {
-        let (a_high, a_low) = a.decomposite();
+        let (a_high, a_low) = a.into_tuple();
         if a_high == S::infinity() {
             DFloat::infinity()
         } else if a_high == S::zero() {
@@ -377,7 +413,7 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S> + RoundSqrt> RoundSqrt for RWDFloat
                 (w_ah_bound.sqrt() + w_rh).extract()
             };
             let r = fasttwosum(r_high, T::div_down(rl_numer, rl_denom));
-            DFloat::_from_pair_raw(r.0, r.1)
+            unsafe { DFloat::from_double_components_unchecked(r.0, r.1) }
         }
     }
 }

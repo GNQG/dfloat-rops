@@ -1,4 +1,3 @@
-#![cfg(feature = "use-fma")]
 #![feature(test)]
 
 extern crate test;
@@ -10,10 +9,10 @@ extern crate dfloat_rops;
 use rand::Rng;
 use dfloat::DFloat;
 use roundops::*;
-use roundops::methods::EmulationFma;
+use roundops::methods::Hardware;
 use dfloat_rops::KVRDFloat;
 
-type KVRDF64 = KVRDFloat<f64, EmulationFma<f64>, rmode::DefaultRounding>;
+type KVRDF64 = KVRDFloat<f64, Hardware<f64>, rmode::Switchable>;
 
 #[bench]
 fn bench_add(b: &mut test::Bencher) {

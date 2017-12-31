@@ -21,8 +21,8 @@ fn bench_add(b: &mut test::Bencher) {
     let mut v1 =  Vec::<DFloat<f64>>::new();
     let mut v2 =  Vec::<DFloat<f64>>::new();
     for _ in 0..1000000 {
-        v1.push(DFloat::from_pair(rng.next_f64(),rng.next_f64()));
-        v2.push(DFloat::from_pair(rng.next_f64(),rng.next_f64()));
+        v1.push(DFloat::from_two_components(rng.next_f64(),rng.next_f64()));
+        v2.push(DFloat::from_two_components(rng.next_f64(),rng.next_f64()));
     }
 
     b.iter(|| for (df1, df2) in v1.iter().zip(v2.iter()) {
@@ -36,8 +36,8 @@ fn bench_sub(b: &mut test::Bencher) {
     let mut v1 = Vec::<DFloat<f64>>::new();
     let mut v2 = Vec::<DFloat<f64>>::new();
     for _ in 0..1000000 {
-        v1.push(DFloat::from_pair(rng.next_f64(),rng.next_f64()));
-        v2.push(DFloat::from_pair(rng.next_f64(),rng.next_f64()));
+        v1.push(DFloat::from_two_components(rng.next_f64(),rng.next_f64()));
+        v2.push(DFloat::from_two_components(rng.next_f64(),rng.next_f64()));
     }
 
     b.iter(|| for (df1, df2) in v1.iter().zip(v2.iter()) {
@@ -51,8 +51,8 @@ fn bench_mul(b: &mut test::Bencher) {
     let mut v1 = Vec::<DFloat<f64>>::new();
     let mut v2 = Vec::<DFloat<f64>>::new();
     for _ in 0..1000000 {
-        v1.push(DFloat::from_pair(rng.next_f64(),rng.next_f64()));
-        v2.push(DFloat::from_pair(rng.next_f64(),rng.next_f64()));
+        v1.push(DFloat::from_two_components(rng.next_f64(),rng.next_f64()));
+        v2.push(DFloat::from_two_components(rng.next_f64(),rng.next_f64()));
     }
 
     b.iter(|| for (df1, df2) in v1.iter().zip(v2.iter()) {
@@ -66,8 +66,8 @@ fn bench_div(b: &mut test::Bencher) {
     let mut v1 = Vec::<DFloat<f64>>::new();
     let mut v2 = Vec::<DFloat<f64>>::new();
     for _ in 0..1000000 {
-        v1.push(DFloat::from_pair(rng.next_f64(),rng.next_f64()));
-        v2.push(DFloat::from_pair(rng.next_f64(),rng.next_f64()));
+        v1.push(DFloat::from_two_components(rng.next_f64(),rng.next_f64()));
+        v2.push(DFloat::from_two_components(rng.next_f64(),rng.next_f64()));
     }
 
     b.iter(|| for (df1, df2) in v1.iter().zip(v2.iter()) {
@@ -80,7 +80,7 @@ fn bench_sqrt(b: &mut test::Bencher) {
     let mut rng = rand::thread_rng();
     let mut v1 = Vec::<DFloat<f64>>::new();
     for _ in 0..1000000 {
-        v1.push(DFloat::from_pair(rng.next_f64(),rng.next_f64()));
+        v1.push(DFloat::from_two_components(rng.next_f64(),rng.next_f64()));
     }
 
     b.iter(|| for df1 in v1.iter() {
