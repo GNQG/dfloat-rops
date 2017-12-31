@@ -1,6 +1,6 @@
 [package]
 name = "dfloat-rops"
-version = "0.0.4"
+version = "0.0.5"
 authors = ["GNQG <my.t.gnq@gmail.com>"]
 readme = "README.md"
 license = "MIT"
