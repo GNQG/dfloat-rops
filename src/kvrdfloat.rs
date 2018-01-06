@@ -73,6 +73,23 @@ impl<S, T> LocalTool<Switchable> for KVRDFloat<S, T, Switchable>
     type InternalNum = S;
     #[inline]
     fn safetwoproduct_up(a: S, b: S) -> (S, S) {
+        #[inline(never)]
+        fn internal<N: EditRoundingMode + IEEE754Float + Clone>(p: N, a: (N,N), b: (N,N))-> (N,N) {
+            let (prod, (a1, a2), (b1, b2)) = (p,a,b);
+            unsafe{
+                let state = N::current_rounding_state();
+                N::upward();
+                let tmp = if prod.abs() > N::radix() / N::min_positive() {
+                    ((a1.clone() / N::radix()) * b1.clone() - (prod.clone() / N::radix())) *
+                    N::radix()
+                } else {
+                    a1.clone() * b1.clone() - prod.clone()
+                };
+                let r = (prod, (tmp + a2.clone() * b1.clone()) + a1 * b2.clone() + a2 * b2);
+                N::set_rounding_state(state);
+                r
+            }
+        }
         use safeeft::split;
         let prod = a.clone() * b.clone();
         let ((a1, a2), (b1, b2)) =
@@ -83,22 +100,27 @@ impl<S, T> LocalTool<Switchable> for KVRDFloat<S, T, Switchable>
             } else {
                 (split(a), split(b))
             };
-        unsafe {
-            S::rmode_controler()
-                .unwrap()
-                .upward_session(|| {
-                    let tmp = if prod.abs() > S::radix() / S::min_positive() {
-                        ((a1.clone() / S::radix()) * b1.clone() - (prod.clone() / S::radix())) *
-                        S::radix()
-                    } else {
-                        a1.clone() * b1.clone() - prod.clone()
-                    };
-                    (prod, (tmp + a2.clone() * b1.clone()) + a1 * b2.clone() + a2 * b2)
-                })
-        }
+        internal(prod,(a1,a2),(b1,b2))
     }
     #[inline]
     fn safetwoproduct_down(a: S, b: S) -> (S, S) {
+        #[inline(never)]
+        fn internal<N: EditRoundingMode + IEEE754Float + Clone>(p: N, a: (N,N), b: (N,N))-> (N,N) {
+            let (prod, (a1, a2), (b1, b2)) = (p,a,b);
+            unsafe{
+                let state = N::current_rounding_state();
+                N::downward();
+                let tmp = if prod.abs() > N::radix() / N::min_positive() {
+                    ((a1.clone() / N::radix()) * b1.clone() - (prod.clone() / N::radix())) *
+                    N::radix()
+                } else {
+                    a1.clone() * b1.clone() - prod.clone()
+                };
+                let r = (prod, (tmp + a2.clone() * b1.clone()) + a1 * b2.clone() + a2 * b2);
+                N::set_rounding_state(state);
+                r
+            }
+        }
         use safeeft::split;
         let prod = a.clone() * b.clone();
         let ((a1, a2), (b1, b2)) =
@@ -109,72 +131,68 @@ impl<S, T> LocalTool<Switchable> for KVRDFloat<S, T, Switchable>
             } else {
                 (split(a), split(b))
             };
-        unsafe {
-            S::rmode_controler()
-                .unwrap()
-                .downward_session(|| {
-                    let tmp = if prod.abs() > S::radix() / S::min_positive() {
-                        ((a1.clone() / S::radix()) * b1.clone() - (prod.clone() / S::radix())) *
-                        S::radix()
-                    } else {
-                        a1.clone() * b1.clone() - prod.clone()
-                    };
-                    (prod, (tmp + a2.clone() * b1.clone()) + a1 * b2.clone() + a2 * b2)
-                })
-        }
+        internal(prod,(a1,a2),(b1,b2))
     }
-    #[inline]
+    #[inline(never)]
     fn add_up_lower(a: (S, S), b: (S, S), tmp: (S, S)) -> S {
-        let (sl, al, bl) = (tmp.1, a.1, b.1);
         unsafe {
-            S::rmode_controler()
-                .unwrap()
-                .upward_session(|| sl + al + bl)
+            let state = S::current_rounding_state();
+            S::upward();
+            let r = tmp.1 + a.1 + b.1;
+            S::set_rounding_state(state);
+            r
         }
     }
-    #[inline]
+    #[inline(never)]
     fn add_down_lower(a: (S, S), b: (S, S), tmp: (S, S)) -> S {
-        let (sl, al, bl) = (tmp.1, a.1, b.1);
         unsafe {
-            S::rmode_controler()
-                .unwrap()
-                .downward_session(|| sl + al + bl)
+            let state = S::current_rounding_state();
+            S::downward();
+            let r = tmp.1 + a.1 + b.1;
+            S::set_rounding_state(state);
+            r
         }
     }
-    #[inline]
+    #[inline(never)]
     fn sub_up_lower(a: (S, S), b: (S, S), tmp: (S, S)) -> S {
-        let (sl, al, bl) = (tmp.1, a.1, b.1);
         unsafe {
-            S::rmode_controler()
-                .unwrap()
-                .upward_session(|| sl + al - bl)
+            let state = S::current_rounding_state();
+            S::upward();
+            let r = tmp.1 + a.1 - b.1;
+            S::set_rounding_state(state);
+            r
         }
     }
-    #[inline]
+    #[inline(never)]
     fn sub_down_lower(a: (S, S), b: (S, S), tmp: (S, S)) -> S {
-        let (sl, al, bl) = (tmp.1, a.1, b.1);
         unsafe {
-            S::rmode_controler()
-                .unwrap()
-                .downward_session(|| sl + al - bl)
+            let state = S::current_rounding_state();
+            S::downward();
+            let r = tmp.1 + a.1 - b.1;
+            S::set_rounding_state(state);
+            r
         }
     }
-    #[inline]
+    #[inline(never)]
     fn mul_up_lower(a: (S, S), b: (S, S), tmp: (S, S)) -> S {
         let ((_, ml), (ah, al), (bh, bl)) = (tmp, a, b);
         unsafe {
-            S::rmode_controler()
-                .unwrap()
-                .upward_session(|| ml + ah * bl.clone() + al.clone() * bh + al * bl)
+            let state = S::current_rounding_state();
+            S::upward();
+            let r = ml + ah * bl.clone() + al.clone() * bh + al * bl;
+            S::set_rounding_state(state);
+            r
         }
     }
-    #[inline]
+    #[inline(never)]
     fn mul_down_lower(a: (S, S), b: (S, S), tmp: (S, S)) -> S {
         let ((_, ml), (ah, al), (bh, bl)) = (tmp, a, b);
         unsafe {
-            S::rmode_controler()
-                .unwrap()
-                .downward_session(|| ml + ah * bl.clone() + al.clone() * bh + al * bl)
+            let state = S::current_rounding_state();
+            S::downward();
+            let r = ml + ah * bl.clone() + al.clone() * bh + al * bl;
+            S::set_rounding_state(state);
+            r
         }
     }
     #[inline]
@@ -346,42 +364,66 @@ impl<S, T> LocalTool<Switchable> for KVRDFloat<S, T, Switchable>
             }
         }
     }
-    #[inline]
+    #[inline(never)]
     fn sqrt_up_lower(a: (S, S), tmp: (S, S)) -> S {
+        #[inline(never)]
+        fn internal<N: EditRoundingMode + IEEE754Float + ::float_traits::Sqrt<Output=N>>(a: (N, N), r: N) -> N {
+            unsafe{
+                N::downward();
+                let r = (a.0 + a.1).sqrt() + r;
+                N::upward();
+                r
+            }
+        }
+
         let ((rh, _), (ah, al)) = (tmp, a);
-        let mut c = S::rmode_controler().unwrap();
         let (neg_a_h, neg_a_l) = Self::safetwoproduct_up(-rh.clone(), rh.clone());
         unsafe {
-            let rl_tmp = c.upward_then(|| neg_a_h + ah.clone() + al.clone() + neg_a_l);
+            let state = S::current_rounding_state();
+            S::upward();
+            let rl_tmp = neg_a_h + ah.clone() + al.clone() + neg_a_l;
             let tmp = if rl_tmp > S::zero() {
                 // down -> up
-                let r = c.downward_then(|| (ah + al).sqrt() + rh);
-                S::upward();
-                r
+                internal((ah, al), rh)
             } else {
                 // up
                 (ah + al).sqrt() + rh
             };
-            rl_tmp / tmp
+            // up
+            let rl = rl_tmp / tmp;
+            S::set_rounding_state(state);
+            rl
         }
     }
-    #[inline]
+    #[inline(never)]
     fn sqrt_down_lower(a: (S, S), tmp: (S, S)) -> S {
+        #[inline(never)]
+        fn internal<N: EditRoundingMode + IEEE754Float + ::float_traits::Sqrt<Output=N>>(a: (N, N), r: N) -> N {
+            unsafe{
+                N::upward();
+                let r = (a.0 + a.1).sqrt() + r;
+                N::downward();
+                r
+            }
+        }
+
         let ((rh, _), (ah, al)) = (tmp, a);
-        let mut c = S::rmode_controler().unwrap();
-        let (neg_a_h, neg_a_l) = Self::safetwoproduct_down(-rh.clone(), rh.clone());
+        let (neg_a_h, neg_a_l) = Self::safetwoproduct_up(-rh.clone(), rh.clone());
         unsafe {
-            let rl_tmp = c.downward_then(|| neg_a_h + ah.clone() + al.clone() + neg_a_l);
+            let state = S::current_rounding_state();
+            S::downward();
+            let rl_tmp = neg_a_h + ah.clone() + al.clone() + neg_a_l;
             let tmp = if rl_tmp > S::zero() {
                 // up -> down
-                let r = c.upward_then(|| (ah + al).sqrt() + rh);
-                S::downward();
-                r
+                internal((ah, al), rh)
             } else {
                 // down
                 (ah + al).sqrt() + rh
             };
-            rl_tmp / tmp
+            // down
+            let rl = rl_tmp / tmp;
+            S::set_rounding_state(state);
+            rl
         }
     }
 }
