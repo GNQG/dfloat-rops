@@ -159,19 +159,11 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundMul for RWDFloatRegular<S, T>
                 }
             }
         } else {
-            let b_bound = if a_low.clone() * b_high.clone() > S::zero() {
-                // |below| > |b_h+b_l|
-                b_high.clone() +
-                ((b_high * (S::eps() / S::radix() * (S::one() + S::eps()))) + b_low.clone())
-            } else {
-                b_high.clone() -
-                ((b_high * (S::eps() / S::radix() * (S::one() + S::eps()))) + b_low.clone())
-            };
             let ml = {
-                let (w_ml, w_ah, w_al, w_bl, w_b_bound) =
+                let (w_ml, w_ah, w_al, w_al2, w_bh, w_bl, w_bl2) =
                     rnum_init!(<direction::Upward, S, T>,
-                        (ml,a_high, a_low, b_low, b_bound));
-                (w_ml + w_ah * w_bl + w_al * w_b_bound).extract()
+                        (ml, a_high, a_low.clone(), a_low, b_high, b_low.clone(), b_low));
+                (w_ml + w_ah * w_bl + w_al * w_bh + w_al2 * w_bl2).extract()
             };
             let (mh, ml) = fasttwosum(mh, ml);
             if mh == S::neg_infinity() {
@@ -200,19 +192,11 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundMul for RWDFloatRegular<S, T>
                 }
             }
         } else {
-            let b_bound = if a_low.clone() * b_high.clone() > S::zero() {
-                // |below| > |b_h+b_l|
-                b_high.clone() -
-                ((b_high * (S::eps() / S::radix() * (S::one() + S::eps()))) + b_low.clone())
-            } else {
-                b_high.clone() +
-                ((b_high * (S::eps() / S::radix() * (S::one() + S::eps()))) + b_low.clone())
-            };
             let ml = {
-                let (w_ml, w_ah, w_al, w_bl, w_b_bound) =
+                let (w_ml, w_ah, w_al, w_al2, w_bh, w_bl, w_bl2) =
                     rnum_init!(<direction::Downward, S, T>,
-                        (ml,a_high, a_low, b_low, b_bound));
-                (w_ml + w_ah * w_bl + w_al * w_b_bound).extract()
+                        (ml, a_high, a_low.clone(), a_low, b_high, b_low.clone(), b_low));
+                (w_ml + w_ah * w_bl + w_al * w_bh + w_al2 * w_bl2).extract()
             };
             let (mh, ml) = fasttwosum(mh, ml);
             if mh == S::infinity() {
