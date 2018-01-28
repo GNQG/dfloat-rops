@@ -1,3 +1,4 @@
+#![cfg(feature = "hwrm")]
 #![feature(test)]
 
 extern crate test;
