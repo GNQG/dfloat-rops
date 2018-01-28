@@ -240,9 +240,9 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundDiv for RWDFloatFma<S, 
             };
 
             let dl_denom = if dl_numer >= S::zero() {
-                T::add_down(b_high, b_low)
+                b_high.clone() - (b_high.abs() * ((S::one() + S::eps()) * S::eps() / S::radix()))
             } else {
-                T::add_up(b_high, b_low)
+                b_high.clone() + (b_high.abs() * ((S::one() + S::eps()) * S::eps() / S::radix()))
             };
 
             let d = fasttwosum(d_high, T::div_up(dl_numer, dl_denom));
@@ -288,9 +288,9 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundDiv for RWDFloatFma<S, 
             };
 
             let dl_denom = if dl_numer >= S::zero() {
-                T::add_up(b_high, b_low)
+                b_high.clone() + (b_high.abs() * ((S::one() + S::eps()) * S::eps() / S::radix()))
             } else {
-                T::add_down(b_high, b_low)
+                b_high.clone() - (b_high.abs() * ((S::one() + S::eps()) * S::eps() / S::radix()))
             };
 
             let d = fasttwosum(d_high, T::div_down(dl_numer, dl_denom));
@@ -313,21 +313,19 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S> + RoundSqrt> RoundSqrt for RW
             DFloat::zero()
         } else {
             let r_high = a_h.clone().sqrt();
+            let ah_tester = a_h.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
             let high_err = fma(r_high.clone(), -r_high.clone(), a_h.clone());
             let high_err = (high_err.clone() + S::unit_underflow()) +
                            high_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
             let rl_numer = T::add_up(high_err, a_l.clone());
             let rl_denom = if rl_numer > S::zero() {
-                T::add_down(T::sqrt_down(a_h.clone() +
-                                         (a_l -
-                                          a_h.abs() *
-                                          (S::eps() / S::radix() * (S::one() + S::eps())))),
-                            r_high.clone())
+                let (w_ah_bound, w_rh) = rnum_init!(<direction::Downward, S, T>,
+                    (a_h - ah_tester, r_high.clone()));
+                (w_ah_bound.sqrt() + w_rh).extract()
             } else {
-                T::add_up(T::sqrt_up(a_h.clone() +
-                                     (a_l +
-                                      a_h.abs() * (S::eps() / S::radix() * (S::one() + S::eps())))),
-                          r_high.clone())
+                let (w_ah_bound, w_rh) = rnum_init!(<direction::Upward, S, T>,
+                    (a_h + ah_tester, r_high.clone()));
+                (w_ah_bound.sqrt() + w_rh).extract()
             };
             let r = fasttwosum(r_high, T::div_up(rl_numer, rl_denom));
             unsafe { DFloat::from_double_components_unchecked(r.0, r.1) }
@@ -341,21 +339,19 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S> + RoundSqrt> RoundSqrt for RW
             DFloat::zero()
         } else {
             let r_high = a_h.clone().sqrt();
+            let ah_tester = a_h.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
             let high_err = fma(r_high.clone(), -r_high.clone(), a_h.clone());
             let high_err = (high_err.clone() - S::unit_underflow()) -
                            high_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
             let rl_numer = T::add_down(high_err, a_l.clone());
             let rl_denom = if rl_numer > S::zero() {
-                T::add_up(T::sqrt_up(a_h.clone() +
-                                     (a_l +
-                                      a_h.abs() * (S::eps() / S::radix() * (S::one() + S::eps())))),
-                          r_high.clone())
+                let (w_ah_bound, w_rh) = rnum_init!(<direction::Upward, S, T>,
+                    (a_h + ah_tester, r_high.clone()));
+                (w_ah_bound.sqrt() + w_rh).extract()
             } else {
-                T::add_down(T::sqrt_down(a_h.clone() +
-                                         (a_l -
-                                          a_h.abs() *
-                                          (S::eps() / S::radix() * (S::one() + S::eps())))),
-                            r_high.clone())
+                let (w_ah_bound, w_rh) = rnum_init!(<direction::Downward, S, T>,
+                    (a_h - ah_tester, r_high.clone()));
+                (w_ah_bound.sqrt() + w_rh).extract()
             };
             let r = fasttwosum(r_high, T::div_down(rl_numer, rl_denom));
             unsafe { DFloat::from_double_components_unchecked(r.0, r.1) }
