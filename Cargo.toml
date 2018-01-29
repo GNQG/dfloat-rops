@@ -1,6 +1,6 @@
 [package]
 name = "dfloat-rops"
-version = "0.0.7"
+version = "0.0.8"
 authors = ["GNQG <my.t.gnq@gmail.com>"]
 readme = "README.md"
 license = "MIT"
@@ -12,7 +12,7 @@ categories = ["algorithms"]
 [dependencies]
 float-traits = "^0.0.3"
 safeeft = "^0.0.5"
-roundops = {git = "https://github.com/GNQG/roundops", rev = "bbc125f02a0a74c925703e3b896a57cbe54c3c3d"}
+roundops = {git = "https://github.com/GNQG/roundops", rev = "32e6a66f4ca8a5474c1abc3e8337a7afd37cd6a2"}
 dfloat = {git = "https://github.com/GNQG/dfloat", rev = "783ab81af902c9c65a47845a695bd2a271cd3b7f"}
 fma = {version = "^0.1.0", optional = true}
 
