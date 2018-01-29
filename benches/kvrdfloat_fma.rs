@@ -20,7 +20,7 @@ fn bench_add(b: &mut test::Bencher) {
     let mut rng = rand::thread_rng();
     let mut v1 = Vec::<DFloat<f64>>::new();
     let mut v2 = Vec::<DFloat<f64>>::new();
-    for _ in 0..1000000 {
+    for _ in 0..10000 {
         v1.push(DFloat::from_two_components(rng.next_f64(),rng.next_f64()));
         v2.push(DFloat::from_two_components(rng.next_f64(),rng.next_f64()));
     }
@@ -35,7 +35,7 @@ fn bench_sub(b: &mut test::Bencher) {
     let mut rng = rand::thread_rng();
     let mut v1 = Vec::<DFloat<f64>>::new();
     let mut v2 = Vec::<DFloat<f64>>::new();
-    for _ in 0..1000000 {
+    for _ in 0..10000 {
         v1.push(DFloat::from_two_components(rng.next_f64(),rng.next_f64()));
         v2.push(DFloat::from_two_components(rng.next_f64(),rng.next_f64()));
     }
@@ -50,7 +50,7 @@ fn bench_mul(b: &mut test::Bencher) {
     let mut rng = rand::thread_rng();
     let mut v1 = Vec::<DFloat<f64>>::new();
     let mut v2 = Vec::<DFloat<f64>>::new();
-    for _ in 0..1000000 {
+    for _ in 0..10000 {
         v1.push(DFloat::from_two_components(rng.next_f64(),rng.next_f64()));
         v2.push(DFloat::from_two_components(rng.next_f64(),rng.next_f64()));
     }
@@ -65,7 +65,7 @@ fn bench_div(b: &mut test::Bencher) {
     let mut rng = rand::thread_rng();
     let mut v1 = Vec::<DFloat<f64>>::new();
     let mut v2 = Vec::<DFloat<f64>>::new();
-    for _ in 0..1000000 {
+    for _ in 0..10000 {
         v1.push(DFloat::from_two_components(rng.next_f64(),rng.next_f64()));
         v2.push(DFloat::from_two_components(rng.next_f64(),rng.next_f64()));
     }
@@ -79,7 +79,7 @@ fn bench_div(b: &mut test::Bencher) {
 fn bench_sqrt(b: &mut test::Bencher) {
     let mut rng = rand::thread_rng();
     let mut v1 = Vec::<DFloat<f64>>::new();
-    for _ in 0..1000000 {
+    for _ in 0..10000 {
         v1.push(DFloat::from_two_components(rng.next_f64(),rng.next_f64()));
     }
 
