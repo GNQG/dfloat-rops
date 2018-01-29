@@ -811,7 +811,7 @@ impl<S, T> RoundDiv for KVRDFloat<S, T, $U>
             DFloat::from_component(dh)
         } else {
             let d = safetwosum(dh.clone(),
-                               Self::div_down_lower((ah, al), (bh, bl), (dh, S::zero())));
+                               Self::div_up_lower((ah, al), (bh, bl), (dh, S::zero())));
             unsafe{ DFloat::from_double_components_unchecked(d.0, d.1) }
         }
     }
