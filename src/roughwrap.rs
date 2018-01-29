@@ -31,13 +31,12 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundAdd for RWDFloatRegular<S, T>
                 }
             }
         } else {
-            #[inline(never)]
-            fn tmp<S: IEEE754Float + Clone, T: RoundOps<S>>(sl: S, al: S, bl: S) -> S {
+            let s_low = {
                 let (w_sl, w_al, w_bl) = rnum_init!(<direction::Upward, S, T>,
-                    (sl, al, bl));
+                    (sl, a_low, b_low));
                 (w_sl + w_al + w_bl).extract()
-            }
-            let (sh, sl) = fasttwosum(sh, tmp::<S, T>(sl, a_low, b_low));
+            };
+            let (sh, sl) = fasttwosum(sh, s_low);
             if sh == S::neg_infinity() {
                 DFloat::min_value()
             } else {
@@ -61,13 +60,12 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundAdd for RWDFloatRegular<S, T>
                 }
             }
         } else {
-            #[inline(never)]
-            fn tmp<S: IEEE754Float + Clone, T: RoundOps<S>>(sl: S, al: S, bl: S) -> S {
+            let s_low = {
                 let (w_sl, w_al, w_bl) = rnum_init!(<direction::Downward, S, T>,
-                    (sl, al, bl));
+                    (sl, a_low, b_low));
                 (w_sl + w_al + w_bl).extract()
-            }
-            let (sh, sl) = fasttwosum(sh, tmp::<S, T>(sl, a_low, b_low));
+            };
+            let (sh, sl) = fasttwosum(sh, s_low);
             if sh == S::infinity() {
                 DFloat::max_value()
             } else {
@@ -94,13 +92,12 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundSub for RWDFloatRegular<S, T>
                 }
             }
         } else {
-            #[inline(never)]
-            fn tmp<S: IEEE754Float + Clone, T: RoundOps<S>>(sl: S, al: S, bl: S) -> S {
+            let s_low = {
                 let (w_sl, w_al, w_bl) = rnum_init!(<direction::Upward, S, T>,
-                    (sl, al, bl));
+                    (sl, a_low, b_low));
                 (w_sl + w_al - w_bl).extract()
-            }
-            let (sh, sl) = fasttwosum(sh, tmp::<S, T>(sl, a_low, b_low));
+            };
+            let (sh, sl) = fasttwosum(sh, s_low);
             if sh == S::neg_infinity() {
                 DFloat::min_value()
             } else {
@@ -124,13 +121,12 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundSub for RWDFloatRegular<S, T>
                 }
             }
         } else {
-            #[inline(never)]
-            fn tmp<S: IEEE754Float + Clone, T: RoundOps<S>>(sl: S, al: S, bl: S) -> S {
+            let s_low = {
                 let (w_sl, w_al, w_bl) = rnum_init!(<direction::Downward, S, T>,
-                    (sl, al, bl));
+                    (sl, a_low, b_low));
                 (w_sl + w_al - w_bl).extract()
-            }
-            let (sh, sl) = fasttwosum(sh, tmp::<S, T>(sl, a_low, b_low));
+            };
+            let (sh, sl) = fasttwosum(sh, s_low);
             if sh == S::infinity() {
                 DFloat::max_value()
             } else {
