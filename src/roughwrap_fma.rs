@@ -226,23 +226,23 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundDiv for RWDFloatFma<S, 
             let high_err = fma(b_high.clone(), -d_high.clone(), a_high);
             let low_err = fma(-b_low.clone(), d_high.clone(), a_low);
             let dl_numer = if b_high > S::zero() {
-                let high_err = (high_err.clone() + S::unit_underflow()) +
-                               high_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
-                let low_err = (low_err.clone() + S::unit_underflow()) +
-                              low_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
+                let high_err = high_err.clone() + (S::unit_underflow() +
+                               high_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps())));
+                let low_err = low_err.clone() + (S::unit_underflow() +
+                              low_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps())));
                 T::add_up(high_err, low_err)
             } else {
-                let high_err = (high_err.clone() - S::unit_underflow()) -
-                               high_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
-                let low_err = (low_err.clone() - S::unit_underflow()) -
-                              low_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
+                let high_err = high_err.clone() - (S::unit_underflow() +
+                               high_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps())));
+                let low_err = low_err.clone() - (S::unit_underflow() +
+                              low_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps())));
                 T::add_down(high_err, low_err)
             };
 
             let dl_denom = if dl_numer >= S::zero() {
-                b_high.clone() - (b_high.abs() * ((S::one() + S::eps()) * S::eps() / S::radix()))
+                b_high.clone() - (b_high.abs() * ((S::one() + S::one() / S::radix()) * S::eps() / S::radix()))
             } else {
-                b_high.clone() + (b_high.abs() * ((S::one() + S::eps()) * S::eps() / S::radix()))
+                b_high.clone() + (b_high.abs() * ((S::one() + S::one() / S::radix()) * S::eps() / S::radix()))
             };
 
             let d = fasttwosum(d_high, T::div_up(dl_numer, dl_denom));
@@ -274,23 +274,23 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundDiv for RWDFloatFma<S, 
             let high_err = fma(b_high.clone(), -d_high.clone(), a_high);
             let low_err = fma(-b_low.clone(), d_high.clone(), a_low);
             let dl_numer = if b_high > S::zero() {
-                let high_err = (high_err.clone() - S::unit_underflow()) -
-                               high_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
-                let low_err = (low_err.clone() - S::unit_underflow()) -
-                              low_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
+                let high_err = high_err.clone() - (S::unit_underflow() +
+                               high_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps())));
+                let low_err = low_err.clone() - (S::unit_underflow() +
+                              low_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps())));
                 T::add_down(high_err, low_err)
             } else {
-                let high_err = (high_err.clone() + S::unit_underflow()) +
-                               high_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
-                let low_err = (low_err.clone() + S::unit_underflow()) +
-                              low_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
+                let high_err = high_err.clone() + (S::unit_underflow() +
+                               high_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps())));
+                let low_err = low_err.clone() + (S::unit_underflow() +
+                              low_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps())));
                 T::add_up(high_err, low_err)
             };
 
             let dl_denom = if dl_numer >= S::zero() {
-                b_high.clone() + (b_high.abs() * ((S::one() + S::eps()) * S::eps() / S::radix()))
+                b_high.clone() + (b_high.abs() * ((S::one() + S::one() / S::radix()) * S::eps() / S::radix()))
             } else {
-                b_high.clone() - (b_high.abs() * ((S::one() + S::eps()) * S::eps() / S::radix()))
+                b_high.clone() - (b_high.abs() * ((S::one() + S::one() / S::radix()) * S::eps() / S::radix()))
             };
 
             let d = fasttwosum(d_high, T::div_down(dl_numer, dl_denom));
@@ -313,10 +313,10 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S> + RoundSqrt> RoundSqrt for RW
             DFloat::zero()
         } else {
             let r_high = a_h.clone().sqrt();
-            let ah_tester = a_h.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
+            let ah_tester = a_h.abs() * (S::eps() / S::radix() * (S::one() + S::one() / S::radix()));
             let high_err = fma(r_high.clone(), -r_high.clone(), a_h.clone());
-            let high_err = (high_err.clone() + S::unit_underflow()) +
-                           high_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
+            let high_err = high_err.clone() + (S::unit_underflow() +
+                           high_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps())));
             let rl_numer = T::add_up(high_err, a_l.clone());
             let rl_denom = if rl_numer > S::zero() {
                 let (w_ah_bound, w_rh) = rnum_init!(<direction::Downward, S, T>,
@@ -339,10 +339,10 @@ impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S> + RoundSqrt> RoundSqrt for RW
             DFloat::zero()
         } else {
             let r_high = a_h.clone().sqrt();
-            let ah_tester = a_h.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
+            let ah_tester = a_h.abs() * (S::eps() / S::radix() * (S::one() + S::one() / S::radix()));
             let high_err = fma(r_high.clone(), -r_high.clone(), a_h.clone());
-            let high_err = (high_err.clone() - S::unit_underflow()) -
-                           high_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
+            let high_err = high_err.clone() - (S::unit_underflow() +
+                           high_err.abs() * (S::eps() / S::radix() * (S::one() + S::eps())));
             let rl_numer = T::add_down(high_err, a_l.clone());
             let rl_denom = if rl_numer > S::zero() {
                 let (w_ah_bound, w_rh) = rnum_init!(<direction::Upward, S, T>,

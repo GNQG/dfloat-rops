@@ -257,9 +257,9 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundDiv for RWDFloatRegular<S, T>
             };
 
             let dl_denom = if dl_numer >= S::zero() {
-                b_high.clone() - (b_high.abs() * ((S::one() + S::eps()) * S::eps() / S::radix()))
+                b_high.clone() - (b_high.abs() * ((S::one() + S::one() / S::radix()) * S::eps() / S::radix()))
             } else {
-                b_high.clone() + (b_high.abs() * ((S::one() + S::eps()) * S::eps() / S::radix()))
+                b_high.clone() + (b_high.abs() * ((S::one() + S::one() / S::radix()) * S::eps() / S::radix()))
             };
 
             let (dh, dl) = fasttwosum(d_high, T::div_up(dl_numer, dl_denom));
@@ -323,9 +323,9 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundDiv for RWDFloatRegular<S, T>
             };
 
             let dl_denom = if dl_numer >= S::zero() {
-                b_high.clone() + (b_high.abs() * ((S::one()+S::eps()) * S::eps() / S::radix()))
+                b_high.clone() + (b_high.abs() * ((S::one() + S::one() / S::radix()) * S::eps() / S::radix()))
             } else {
-                b_high.clone() - (b_high.abs() * ((S::one()+S::eps()) * S::eps() / S::radix()))
+                b_high.clone() - (b_high.abs() * ((S::one() + S::one() / S::radix()) * S::eps() / S::radix()))
             };
 
             let d = fasttwosum(d_high, T::div_down(dl_numer, dl_denom));
@@ -356,7 +356,7 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S> + RoundSqrt> RoundSqrt for RWDFloat
                 let (neg_a_high, neg_a_low) = safetwoproduct(-r_high.clone(), r_high.clone());
                 (neg_a_high, neg_a_low + (S::one() + S::one() + S::one()) * S::unit_underflow())
             };
-            let ah_tester = a_high.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
+            let ah_tester = a_high.abs() * (S::eps() / S::radix() * (S::one() + S::one() / S::radix()));
 
             let (w_al, w_ah_e, w_neg_al) =
                 rnum_init!(<direction::Upward, S, T>,
@@ -393,7 +393,7 @@ impl<S: IEEE754Float + Clone, T: RoundOps<S> + RoundSqrt> RoundSqrt for RWDFloat
                 let (neg_a_high, neg_a_low) = safetwoproduct(-r_high.clone(), r_high.clone());
                 (neg_a_high, neg_a_low - (S::one() + S::one() + S::one()) * S::unit_underflow())
             };
-            let ah_tester = a_high.abs() * (S::eps() / S::radix() * (S::one() + S::eps()));
+            let ah_tester = a_high.abs() * (S::eps() / S::radix() * (S::one() + S::one() / S::radix()));
 
             let (w_al, w_ah_e, w_neg_al) =
                 rnum_init!(<direction::Downward, S, T>,
