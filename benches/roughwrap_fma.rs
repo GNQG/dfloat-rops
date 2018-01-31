@@ -13,9 +13,11 @@ use roundops::*;
 use roundops::methods::RoughWrappingUnchecked;
 use dfloat_rops::RWDFloatFma;
 
-fn gen_f64(rng: &mut rand::ThreadRng) -> f64{
-    (rng.next_f64()+1.) * 2f64.powi(rng.gen_range(-25, 25)) *
-                 ((rng.gen_range::<i16>(0, 2) * 2 - 1) as f64)
+fn gen_df64(rng: &mut rand::ThreadRng) -> DFloat<f64>{
+    let h = (rng.next_f64()+1.) * 2f64.powi(rng.gen_range(-25, 25)) *
+                 ((rng.gen_range::<i16>(0, 2) * 2 - 1) as f64);
+    let l = h * (rng.next_f64() + 1.) * 2f64.powi(-53) * ((rng.gen_range::<i16>(0, 2) * 2 - 1) as f64);
+    DFloat::from_two_components(h, l)
 }
 
 type RWDF64 = RWDFloatFma<f64, RoughWrappingUnchecked<f64>>;
@@ -26,8 +28,8 @@ fn bench_add(b: &mut test::Bencher) {
     let mut v1 =  Vec::<DFloat<f64>>::new();
     let mut v2 =  Vec::<DFloat<f64>>::new();
     for _ in 0..1000 {
-        v1.push(DFloat::from_two_components(gen_f64(&mut rng),gen_f64(&mut rng)));
-        v2.push(DFloat::from_two_components(gen_f64(&mut rng),gen_f64(&mut rng)));
+        v1.push(gen_df64(&mut rng));
+        v2.push(gen_df64(&mut rng));
     }
 
     b.iter(|| for (df1, df2) in v1.iter().zip(v2.iter()) {
@@ -41,8 +43,8 @@ fn bench_sub(b: &mut test::Bencher) {
     let mut v1 = Vec::<DFloat<f64>>::new();
     let mut v2 = Vec::<DFloat<f64>>::new();
     for _ in 0..1000 {
-        v1.push(DFloat::from_two_components(gen_f64(&mut rng),gen_f64(&mut rng)));
-        v2.push(DFloat::from_two_components(gen_f64(&mut rng),gen_f64(&mut rng)));
+        v1.push(gen_df64(&mut rng));
+        v2.push(gen_df64(&mut rng));
     }
 
     b.iter(|| for (df1, df2) in v1.iter().zip(v2.iter()) {
@@ -56,8 +58,8 @@ fn bench_mul(b: &mut test::Bencher) {
     let mut v1 = Vec::<DFloat<f64>>::new();
     let mut v2 = Vec::<DFloat<f64>>::new();
     for _ in 0..1000 {
-        v1.push(DFloat::from_two_components(gen_f64(&mut rng),gen_f64(&mut rng)));
-        v2.push(DFloat::from_two_components(gen_f64(&mut rng),gen_f64(&mut rng)));
+        v1.push(gen_df64(&mut rng));
+        v2.push(gen_df64(&mut rng));
     }
 
     b.iter(|| for (df1, df2) in v1.iter().zip(v2.iter()) {
@@ -71,8 +73,8 @@ fn bench_div(b: &mut test::Bencher) {
     let mut v1 = Vec::<DFloat<f64>>::new();
     let mut v2 = Vec::<DFloat<f64>>::new();
     for _ in 0..1000 {
-        v1.push(DFloat::from_two_components(gen_f64(&mut rng),gen_f64(&mut rng)));
-        v2.push(DFloat::from_two_components(gen_f64(&mut rng),gen_f64(&mut rng)));
+        v1.push(gen_df64(&mut rng));
+        v2.push(gen_df64(&mut rng));
     }
 
     b.iter(|| for (df1, df2) in v1.iter().zip(v2.iter()) {
@@ -85,7 +87,7 @@ fn bench_sqrt(b: &mut test::Bencher) {
     let mut rng = rand::thread_rng();
     let mut v1 = Vec::<DFloat<f64>>::new();
     for _ in 0..1000 {
-        v1.push(DFloat::from_two_components(gen_f64(&mut rng),gen_f64(&mut rng)));
+        v1.push(gen_df64(&mut rng));
     }
 
     b.iter(|| for df1 in v1.iter() {
