@@ -8,6 +8,7 @@ use roundops::utils::FloatSuccPred;
 use safeeft::{fasttwosum, safetwosum_fma as safetwosum, safetwoproduct_fma as safetwoproduct};
 use fma::{fma, Fma};
 
+#[derive(Clone)]
 pub struct RWDFloatFma<S: IEEE754Float + Fma + Clone, T: RoundOps<S>>(PhantomData<(S, T)>);
 
 impl<S: IEEE754Float + Fma + Clone, T: RoundOps<S>> RoundingMethod for RWDFloatFma<S, T> {

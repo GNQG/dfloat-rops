@@ -7,6 +7,7 @@ use roundops::utils::FloatSuccPred;
 use safeeft::{fasttwosum, safetwosum_straight as safetwosum,
               safetwoproduct_branch as safetwoproduct};
 
+#[derive(Clone)]
 pub struct RWDFloatRegular<S: IEEE754Float + Clone, T: RoundOps<S>>(PhantomData<(S, T)>);
 
 impl<S: IEEE754Float + Clone, T: RoundOps<S>> RoundingMethod for RWDFloatRegular<S, T> {
